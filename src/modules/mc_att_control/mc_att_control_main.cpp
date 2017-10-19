@@ -83,6 +83,9 @@
 #include <uORB/topics/vehicle_status.h>
 #include <uORB/uORB.h>
 
+// B-1000 add-ons.
+#include <uORB/topics/motor_throttle.h>
+
 /**
  * Multicopter attitude control app start / stop handling function
  *
@@ -141,6 +144,8 @@ private:
 	int	_sensor_gyro_sub[MAX_GYRO_COUNT];	/**< gyro data subscription */
 	int	_sensor_correction_sub;	/**< sensor thermal correction subscription */
 
+	int _motor_throttle_sub;
+
 	unsigned _gyro_count;
 	int _selected_gyro;
 
@@ -166,6 +171,7 @@ private:
 	struct battery_status_s				_battery_status;	/**< battery status */
 	struct sensor_gyro_s			_sensor_gyro;		/**< gyro data before thermal correctons and ekf bias estimates are applied */
 	struct sensor_correction_s		_sensor_correction;		/**< sensor thermal corrections */
+	struct motor_throttle_s			_motor_throttle;	// Motor throttle coming from B-1000 mtoro controller.
 
 	union {
 		struct {
@@ -360,6 +366,8 @@ private:
 	 */
 	void		sensor_correction_poll();
 
+	void		motor_throttle_poll();
+
 	/**
 	 * Shim for calling task_main from task_create.
 	 */
@@ -393,6 +401,7 @@ MulticopterAttitudeControl::MulticopterAttitudeControl() :
 	_motor_limits_sub(-1),
 	_battery_status_sub(-1),
 	_sensor_correction_sub(-1),
+	_motor_throttle_sub(-1),
 
 	/* gyro selection */
 	_gyro_count(1),
@@ -830,6 +839,18 @@ MulticopterAttitudeControl::sensor_correction_poll()
 	}
 }
 
+void
+MulticopterAttitudeControl::motor_throttle_poll()
+{
+	/* check if there is a new message */
+	bool updated;
+	orb_check(_motor_throttle_sub, &updated);
+
+	if (updated) {
+		orb_copy(ORB_ID(motor_throttle), _motor_throttle_sub, &_motor_throttle);
+	}
+}
+
 /**
  * Attitude controller.
  * Input: 'vehicle_attitude_setpoint' topics (depending on mode)
@@ -1096,6 +1117,7 @@ MulticopterAttitudeControl::task_main()
 	_vehicle_status_sub = orb_subscribe(ORB_ID(vehicle_status));
 	_motor_limits_sub = orb_subscribe(ORB_ID(multirotor_motor_limits));
 	_battery_status_sub = orb_subscribe(ORB_ID(battery_status));
+	_motor_throttle_sub = orb_subscribe(ORB_ID(motor_throttle));
 
 	_gyro_count = math::min(orb_group_count(ORB_ID(sensor_gyro)), MAX_GYRO_COUNT);
 
@@ -1165,6 +1187,7 @@ MulticopterAttitudeControl::task_main()
 			battery_status_poll();
 			control_state_poll();
 			sensor_correction_poll();
+			motor_throttle_poll();
 
 			/* Check if we are in rattitude mode and the pilot is above the threshold on pitch
 			 * or roll (yaw can rotate 360 in normal att control).  If both are true don't
@@ -1268,6 +1291,12 @@ MulticopterAttitudeControl::task_main()
 				_controller_status.pitch_rate_integ = _rates_int(1);
 				_controller_status.yaw_rate_integ = _rates_int(2);
 				_controller_status.timestamp = hrt_absolute_time();
+
+
+				// B-1000 addition, add the throttle to actuators. This is now [0:1]. Remember for the mixer.
+				// Limits etc. are handled up stream by the motor_controller module.
+				_actuators.control[4] = _motor_throttle.throttle;
+
 
 				if (!_actuators_0_circuit_breaker_enabled) {
 					if (_actuators_0_pub != nullptr) {
