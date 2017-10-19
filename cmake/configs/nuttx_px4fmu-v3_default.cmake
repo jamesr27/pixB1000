@@ -110,21 +110,28 @@ set(config_module_list
 	#
 	# Estimation modules
 	#
-	modules/attitude_estimator_q
+	#modules/attitude_estimator_q
 	modules/ekf2
-	modules/local_position_estimator
-	modules/position_estimator_inav
+	#modules/local_position_estimator
+	#modules/position_estimator_inav
 
 	#
 	# Vehicle Control
 	#
-	modules/fw_att_control
-	modules/fw_pos_control_l1
+#	modules/fw_att_control
+#	modules/fw_pos_control_l1
 	modules/gnd_att_control
 	modules/gnd_pos_control
 	modules/mc_att_control
 	modules/mc_pos_control
-	modules/vtol_att_control
+#	modules/vtol_att_control
+
+    
+    #
+    # B-1000 stuff
+    #
+    modules/motor_controller
+
 
 	#
 	# Logging
@@ -170,17 +177,17 @@ set(config_module_list
 	#
 	# OBC challenge
 	#
-	modules/bottle_drop
+	#modules/bottle_drop
 
 	#
 	# Rover apps
 	#
-	examples/rover_steering_control
+	#examples/rover_steering_control
 
 	#
 	# Segway
 	#
-	examples/segway
+	#examples/segway
 
 	#
 	# Demo apps
