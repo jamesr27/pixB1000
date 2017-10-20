@@ -40,6 +40,7 @@
 #include <uORB/topics/motor_throttle.h>
 #include <uORB/topics/rc_channels.h>
 #include <uORB/topics/actuator_armed.h>
+#include <uORB/topics/motor_kill.h>
 
 
  extern "C" __EXPORT int motor_controller_main(int argc, char *argv[]);
@@ -102,6 +103,7 @@
 		int						_rc_channels_sub;
 		int						_vehicle_attitude_sub;
 		orb_advert_t 			_motor_throttle_pub;
+		orb_advert_t			_motor_kill_pub;
 
 		int 					_param_counter;
 
@@ -117,7 +119,7 @@
 		motor_throttle_s		_motor_throttle;
 		actuator_armed_s		_actuator_armed;
 		rc_channels_s			_rc_channels;
-
+		motor_kill_s			_motor_kill;
 
 
 		struct {

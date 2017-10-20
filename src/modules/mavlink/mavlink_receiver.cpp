@@ -307,6 +307,11 @@ MavlinkReceiver::handle_message(mavlink_message_t *msg)
 		handle_message_play_tune(msg);
 		break;
 
+		// B-1000
+	case MAVLINK_MSG_ID_ROTORRPM:
+		handle_message_rotor_rpm(msg);
+		break;
+
 	default:
 		break;
 	}
@@ -1502,6 +1507,30 @@ MavlinkReceiver::handle_message_play_tune(mavlink_message_t *msg)
 			}
 		}
 	}
+}
+
+void
+MavlinkReceiver::handle_message_rotor_rpm(mavlink_message_t *msg)
+{
+	mavlink_rotorrpm_t rotor_rpm;
+	mavlink_msg_rotorrpm_decode(msg, &rotor_rpm);
+
+	struct rotor_rpm_s f;
+	memset(&f, 0, sizeof(f));
+
+	// Assign
+	f.rpm = rotor_rpm.rpm;
+
+	// Publish to uORB
+	if (_rotor_rpm == nullptr)
+	{
+		_rotor_rpm = orb_advertise(ORB_ID(rotor_rpm), &f);
+	}
+	else
+	{
+		orb_publish(ORB_ID(rotor_rpm), _rotor_rpm, &f);
+	}
+
 }
 
 switch_pos_t

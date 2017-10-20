@@ -33,6 +33,7 @@ namespace motor_controller {
 
 	/* publications */
  _motor_throttle_pub(nullptr),
+ _motor_kill_pub(nullptr),
 
  _param_counter(0),
  _integral_sum(0),
@@ -46,6 +47,7 @@ namespace motor_controller {
  	memset(&_motor_throttle, 0, sizeof(_motor_throttle));
  	memset(&_actuator_armed, 0, sizeof(_actuator_armed));
 	memset(&_rc_channels, 0, sizeof(_rc_channels));
+	memset(&_motor_kill, 0, sizeof(_motor_kill));
 
  	_params_handles.motor_control_p			= 	param_find("MOTOR_C_P");
  	_params_handles.motor_control_i			= 	param_find("MOTOR_C_I");
@@ -170,6 +172,20 @@ MotorController::run_controller(float dt)
 	 else if (_rc_channels.channels[8] > 0.3f)
 	 {
 		 _switch_state = 2;
+	 }
+
+	 // 2: Set the state of the kill switch
+	 if (!_actuator_armed.armed)
+	 {
+		 _motor_kill.kill_switch = true;
+	 }
+	 else if (_actuator_armed.armed && _rc_channels.channels[9] < 0)
+	 {
+		 _motor_kill.kill_switch = true;
+	 }
+	 else if (_actuator_armed.armed && _rc_channels.channels[9] >= 0)
+	 {
+		 _motor_kill.kill_switch = false;
 	 }
 
 
@@ -337,7 +353,7 @@ MotorController::task_main()
 				dt = 0.02f;
 			}
 
-			printf("motor_controller tickheli_state_machine: %d \n",(double)dt);
+			printf("motor_controller tick: %d \n",(double)dt);
 
 			// If we are initialised we call the run_state_machine function.
 			if(initialised > 0) {
@@ -363,12 +379,18 @@ MotorController::task_main()
  void
 MotorController::assign_and_publish()
  {
-	 // Assign - We try to assign data to structures in the code when we are finished with them. So we
-	 // shouldn't need to do any further assigning here.
+	 // Assign. Everything we need has been assigned previously in the code.
+
 
 	 // Publish - All orb publishing is done in one go here.
 	 if (_motor_throttle_pub != nullptr) orb_publish(ORB_ID(motor_throttle), _motor_throttle_pub, &_motor_throttle);
 	 else _motor_throttle_pub = orb_advertise(ORB_ID(motor_throttle), &_motor_throttle);
+
+	 // 2: Motor kill switch
+	 if (_motor_kill_pub != nullptr) orb_publish(ORB_ID(motor_kill), _motor_kill_pub, &_motor_kill);
+     else _motor_kill_pub = orb_advertise(ORB_ID(motor_kill), &_motor_kill);
+
+
 
 	 return;
  }
@@ -405,7 +427,7 @@ MotorController::task_main_trampoline(int argc, char *argv[])
  motor_controller_main(int argc, char *argv[])
  {
  	if (argc < 2) {
- 		warnx("usage: heli_state_machine {start|stop|status}");
+ 		warnx("usage: motor_controller {start|stop|status}");
  		return 1;
  	}
 

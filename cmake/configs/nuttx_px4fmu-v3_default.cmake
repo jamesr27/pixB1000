@@ -131,6 +131,7 @@ set(config_module_list
     # B-1000 stuff
     #
     modules/motor_controller
+    modules/motor_kill
 
 
 	#

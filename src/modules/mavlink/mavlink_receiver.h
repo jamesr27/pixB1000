@@ -84,6 +84,11 @@
 #include "mavlink_ftp.h"
 #include "mavlink_log_handler.h"
 
+// B-1000 additions
+#include <uORB/topics/rotor_rpm.h>
+#include <v2.0/B-1000/mavlink_msg_rotorrpm.h>
+
+
 #define PX4_EPOCH_SECS 1234567890ULL
 
 class Mavlink;
@@ -151,6 +156,9 @@ private:
 	void handle_message_serial_control(mavlink_message_t *msg);
 	void handle_message_logging_ack(mavlink_message_t *msg);
 	void handle_message_play_tune(mavlink_message_t *msg);
+
+	// B-1000
+	void handle_message_rotor_rpm(mavlink_message_t *msg);
 
 	void *receive_thread(void *arg);
 
@@ -239,6 +247,10 @@ private:
 	static const int _gps_inject_data_queue_size = 6;
 	orb_advert_t _gps_inject_data_pub;
 	orb_advert_t _command_ack_pub;
+
+	// B-1000
+	orb_advert_t _rotor_rpm;
+
 	int _control_mode_sub;
 	uint64_t _global_ref_timestamp;
 	int _hil_frames;
