@@ -1512,6 +1512,7 @@ MavlinkReceiver::handle_message_play_tune(mavlink_message_t *msg)
 void
 MavlinkReceiver::handle_message_rotor_rpm(mavlink_message_t *msg)
 {
+	printf("In handle_rotor_rpm\n");
 	mavlink_rotorrpm_t rotor_rpm;
 	mavlink_msg_rotorrpm_decode(msg, &rotor_rpm);
 

@@ -94,6 +94,11 @@
 #include <uORB/topics/collision_report.h>
 #include <uORB/uORB.h>
 
+// James adds
+#include <uORB/topics/motor_kill.h>
+#include <uORB/topics/rotor_rpm.h>
+#include <v2.0/B-1000/mavlink_msg_rotorrpm.h>
+#include <v2.0/B-1000/mavlink_msg_motorkill.h>
 
 static uint16_t cm_uint16_from_m_float(float m);
 static void get_mavlink_mode_state(struct vehicle_status_s *status, uint8_t *mavlink_state,
@@ -3980,6 +3985,135 @@ protected:
 	}
 };
 
+// James additions.
+// We add rotor_rpm and motor_kill to the streams
+class MavlinkStreamRotorRpm : public MavlinkStream
+{
+public:
+	const char *get_name() const
+	{
+		return MavlinkStreamRotorRpm::get_name_static();
+	}
+
+	static const char *get_name_static()
+	{
+		return "ROTOR_RPM";
+	}
+
+	static uint16_t get_id_static()
+	{
+		return MAVLINK_MSG_ID_ROTORRPM;
+	}
+
+	uint16_t get_id()
+	{
+		return get_id_static();
+	}
+
+	static MavlinkStream *new_instance(Mavlink *mavlink)
+	{
+		return new MavlinkStreamRotorRpm(mavlink);
+	}
+
+	unsigned get_size()
+	{
+		return MAVLINK_MSG_ID_ROTORRPM_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES;
+	}
+
+private:
+	MavlinkOrbSubscription *_rotor_rpm_sub;
+	uint64_t _rotor_rpm_time;
+	struct rotor_rpm_s _rotor_rpm;
+
+	/* do not allow top copying this class */
+	MavlinkStreamRotorRpm(MavlinkStreamRotorRpm &);
+	MavlinkStreamRotorRpm &operator = (const MavlinkStreamRotorRpm &);
+
+protected:
+	explicit MavlinkStreamRotorRpm(Mavlink *mavlink) : MavlinkStream(mavlink),
+		_rotor_rpm_sub(_mavlink->add_orb_subscription(ORB_ID(rotor_rpm))),
+		_rotor_rpm_time(0),
+		_rotor_rpm()
+	{}
+
+	void send(const hrt_abstime t)
+	{
+		bool rotor_rpm_updated = _rotor_rpm_sub->update(&_rotor_rpm_time, &_rotor_rpm);
+
+		if (rotor_rpm_updated) {
+
+			mavlink_rotorrpm_t msg = {};
+
+			msg.rpm = _rotor_rpm.rpm;
+			mavlink_msg_rotorrpm_send_struct(_mavlink->get_channel(), &msg);
+			}
+	}
+};
+
+
+class MavlinkStreamMotorKill : public MavlinkStream
+{
+public:
+	const char *get_name() const
+	{
+		return MavlinkStreamMotorKill::get_name_static();
+	}
+
+	static const char *get_name_static()
+	{
+		return "MOTOR_KILL";
+	}
+
+	static uint16_t get_id_static()
+	{
+		return MAVLINK_MSG_ID_MOTORKILL;
+	}
+
+	uint16_t get_id()
+	{
+		return get_id_static();
+	}
+
+	static MavlinkStream *new_instance(Mavlink *mavlink)
+	{
+		return new MavlinkStreamMotorKill(mavlink);
+	}
+
+	unsigned get_size()
+	{
+		return MAVLINK_MSG_ID_MOTORKILL_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES;
+	}
+
+private:
+	MavlinkOrbSubscription *_motor_kill_sub;
+	uint64_t _motor_kill_time;
+	struct motor_kill_s _motor_kill;
+
+	/* do not allow top copying this class */
+	MavlinkStreamMotorKill(MavlinkStreamMotorKill &);
+	MavlinkStreamMotorKill &operator = (const MavlinkStreamMotorKill &);
+
+protected:
+	explicit MavlinkStreamMotorKill(Mavlink *mavlink) : MavlinkStream(mavlink),
+		_motor_kill_sub(_mavlink->add_orb_subscription(ORB_ID(motor_kill))),
+		_motor_kill_time(0),
+		_motor_kill()
+	{}
+
+	void send(const hrt_abstime t)
+	{
+		bool motor_kill_updated = _motor_kill_sub->update(&_motor_kill_time, &_motor_kill);
+
+		if (motor_kill_updated) {
+
+			mavlink_motorkill_t msg = {};
+
+			msg.killSwitch = _motor_kill.kill_switch;
+			mavlink_msg_motorkill_send_struct(_mavlink->get_channel(), &msg);
+			}
+	}
+};
+
 const StreamListItem *streams_list[] = {
 	new StreamListItem(&MavlinkStreamHeartbeat::new_instance, &MavlinkStreamHeartbeat::get_name_static, &MavlinkStreamHeartbeat::get_id_static),
 	new StreamListItem(&MavlinkStreamStatustext::new_instance, &MavlinkStreamStatustext::get_name_static, &MavlinkStreamStatustext::get_id_static),
@@ -4029,5 +4163,7 @@ const StreamListItem *streams_list[] = {
 	new StreamListItem(&MavlinkStreamMountOrientation::new_instance, &MavlinkStreamMountOrientation::get_name_static, &MavlinkStreamMountOrientation::get_id_static),
 	new StreamListItem(&MavlinkStreamHighLatency::new_instance, &MavlinkStreamHighLatency::get_name_static, &MavlinkStreamWind::get_id_static),
 	new StreamListItem(&MavlinkStreamGroundTruth::new_instance, &MavlinkStreamGroundTruth::get_name_static, &MavlinkStreamGroundTruth::get_id_static),
+	new StreamListItem(&MavlinkStreamRotorRpm::new_instance, &MavlinkStreamRotorRpm::get_name_static, &MavlinkStreamRotorRpm::get_id_static),
+	new StreamListItem(&MavlinkStreamMotorKill::new_instance, &MavlinkStreamMotorKill::get_name_static, &MavlinkStreamMotorKill::get_id_static),
 	nullptr
 };

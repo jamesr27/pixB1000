@@ -143,7 +143,7 @@ MotorController::poll_all() {
  	// 3: Get the rc inputs.
  	orb_check(_rc_channels_sub, &updated);
  	if(updated) {
- 		//orb_copy(ORB_ID(rc_channels), _rc_channels_sub, &_rc_channels);
+ 		orb_copy(ORB_ID(rc_channels), _rc_channels_sub, &_rc_channels);
  	}
 
  }
@@ -307,6 +307,7 @@ MotorController::task_main()
  {
 	/* get an initial update for all sensor and status data */
  	parameters_update();
+ 	printf("here1\n");
 
  	// Subscriptions
  	_rotor_rpm_sub = orb_subscribe(ORB_ID(rotor_rpm));
@@ -314,11 +315,13 @@ MotorController::task_main()
  	_rc_channels_sub = orb_subscribe(ORB_ID(rc_channels));
  	_vehicle_attitude_sub = orb_subscribe(ORB_ID(vehicle_attitude));
 
+ 	printf("here2\n");
 	/* wakeup source */
  	px4_pollfd_struct_t fds[1];
  	fds[0].fd = _vehicle_attitude_sub;
  	fds[0].events = POLLIN;
 
+ 	printf("here3\n");
  	int initialised = 0;
 
  	while (!_task_should_exit) {
@@ -353,7 +356,8 @@ MotorController::task_main()
 				dt = 0.02f;
 			}
 
-			printf("motor_controller tick: %d \n",(double)dt);
+			// It hangs up without this sleep for some reason...
+			usleep(3000);
 
 			// If we are initialised we call the run_state_machine function.
 			if(initialised > 0) {
@@ -404,7 +408,7 @@ MotorController::start()
  	_control_task = px4_task_spawn_cmd("motor_controller",
  		SCHED_DEFAULT,
  		SCHED_PRIORITY_MAX,
- 		1500,
+ 		3000,
  		(px4_main_t)&MotorController::task_main_trampoline,
  		nullptr);
 

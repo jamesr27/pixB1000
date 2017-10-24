@@ -1984,32 +1984,35 @@ Mavlink::task_main(int argc, char *argv[])
 	}
 
 	switch (_mode) {
+	// James adds some message here.
 	case MAVLINK_MODE_NORMAL:
 		configure_stream("SYS_STATUS", 1.0f);
 		configure_stream("EXTENDED_SYS_STATE", 1.0f);
 		configure_stream("HIGHRES_IMU", 1.5f);
-		configure_stream("ATTITUDE", 20.0f);
-		configure_stream("RC_CHANNELS", 5.0f);
+		configure_stream("ATTITUDE", 2.0f);
+		configure_stream("RC_CHANNELS", 1.0f);
 		configure_stream("SERVO_OUTPUT_RAW_0", 1.0f);
 		configure_stream("ALTITUDE", 1.0f);
 		configure_stream("GPS_RAW_INT", 1.0f);
-		configure_stream("ADSB_VEHICLE", 2.0f);
-		configure_stream("COLLISION", 2.0f);
+		configure_stream("ADSB_VEHICLE", 1.0f);
+		configure_stream("COLLISION", 0.5f);
 		configure_stream("DISTANCE_SENSOR", 0.5f);
 		configure_stream("OPTICAL_FLOW_RAD", 1.0f);
 		configure_stream("VISION_POSITION_ESTIMATE", 1.0f);
 		configure_stream("ESTIMATOR_STATUS", 0.5f);
-		configure_stream("NAV_CONTROLLER_OUTPUT", 1.5f);
-		configure_stream("GLOBAL_POSITION_INT", 5.0f);
+		configure_stream("NAV_CONTROLLER_OUTPUT", 1.0f);
+		configure_stream("GLOBAL_POSITION_INT", 1.0f);
 		configure_stream("LOCAL_POSITION_NED", 1.0f);
-		configure_stream("POSITION_TARGET_LOCAL_NED", 1.5f);
-		configure_stream("POSITION_TARGET_GLOBAL_INT", 1.5f);
-		configure_stream("ATTITUDE_TARGET", 2.0f);
+		configure_stream("POSITION_TARGET_LOCAL_NED", 1.0f);
+		configure_stream("POSITION_TARGET_GLOBAL_INT", 1.0f);
+		configure_stream("ATTITUDE_TARGET", 1.0f);
 		configure_stream("HOME_POSITION", 0.5f);
 		configure_stream("NAMED_VALUE_FLOAT", 1.0f);
 		configure_stream("VFR_HUD", 4.0f);
 		configure_stream("WIND_COV", 1.0f);
-		break;
+		// James adds
+		configure_stream("MOTOR_KILL",0.2f);
+		configure_stream("ROTOR_RPM",1.0f);
 
 	case MAVLINK_MODE_ONBOARD:
 		configure_stream("SYS_STATUS", 5.0f);
@@ -2044,23 +2047,31 @@ Mavlink::task_main(int argc, char *argv[])
 		configure_stream("CAMERA_TRIGGER", 500.0f);
 		configure_stream("CAMERA_IMAGE_CAPTURED", 5.0f);
 		configure_stream("ACTUATOR_CONTROL_TARGET0", 10.0f);
+
+		// James adds
+		configure_stream("MOTOR_KILL",0.2f);
+		configure_stream("ROTOR_RPM",1.0f);
 		break;
 
 	case MAVLINK_MODE_OSD:
-		configure_stream("SYS_STATUS", 5.0f);
+		configure_stream("SYS_STATUS", 15.0f);
 		configure_stream("EXTENDED_SYS_STATE", 1.0f);
-		configure_stream("ATTITUDE", 25.0f);
-		configure_stream("RC_CHANNELS", 5.0f);
+		configure_stream("ATTITUDE", 2.0f);
+		configure_stream("RC_CHANNELS", 1.0f);
 		configure_stream("SERVO_OUTPUT_RAW_0", 1.0f);
 		configure_stream("ALTITUDE", 1.0f);
 		configure_stream("GPS_RAW_INT", 1.0f);
 		configure_stream("ESTIMATOR_STATUS", 1.0f);
-		configure_stream("GLOBAL_POSITION_INT", 10.0f);
-		configure_stream("ATTITUDE_TARGET", 10.0f);
+		configure_stream("GLOBAL_POSITION_INT", 5.0f);
+		configure_stream("ATTITUDE_TARGET", 5.0f);
 		configure_stream("HOME_POSITION", 0.5f);
-		configure_stream("VFR_HUD", 25.0f);
+		configure_stream("VFR_HUD", 5.0f);
 		configure_stream("WIND_COV", 2.0f);
 		configure_stream("SYSTEM_TIME", 1.0f);
+
+		// James adds
+		configure_stream("MOTOR_KILL",0.2f);
+		configure_stream("ROTOR_RPM",1.0f);
 		break;
 
 	case MAVLINK_MODE_MAGIC:
@@ -2098,6 +2109,10 @@ Mavlink::task_main(int argc, char *argv[])
 		configure_stream("CAMERA_IMAGE_CAPTURED", 5.0f);
 		configure_stream("ACTUATOR_CONTROL_TARGET0", 30.0f);
 		configure_stream("MANUAL_CONTROL", 5.0f);
+
+		// James adds
+		configure_stream("MOTOR_KILL",0.2f);
+		configure_stream("ROTOR_RPM",1.0f);
 		break;
 
 	case MAVLINK_MODE_IRIDIUM:

@@ -3,7 +3,7 @@ px4_add_module(
 	MODULE modules__motor_kill
 	MAIN motor_kill
 	PRIORITY "SCHED_PRIORITY_MAX-40"
-	STACK_MAIN 1000
+	STACK_MAIN 1500
 	STACK_MAX 2000
 	COMPILE_FLAGS -Os
 	SRCS

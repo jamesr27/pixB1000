@@ -178,7 +178,7 @@ MotorKill::start()
  	_control_task = px4_task_spawn_cmd("motor_kill",
  		SCHED_DEFAULT,
  		SCHED_PRIORITY_MAX,
- 		1000,
+ 		1500,
  		(px4_main_t)&MotorKill::task_main_trampoline,
  		nullptr);
 
