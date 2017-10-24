@@ -134,6 +134,8 @@ MotorController::poll_all() {
  		orb_copy(ORB_ID(rotor_rpm), _rotor_rpm_sub, &_rotor_rpm);
  	}
 
+ 	//printf("Controller rpm: %0.4f\n",(double)_rotor_rpm.rpm);
+
  	// 2: Get the arming state.
  	orb_check(_actuator_armed_sub, &updated);
  	if(updated) {
@@ -407,7 +409,7 @@ MotorController::start()
 	/* start the task */
  	_control_task = px4_task_spawn_cmd("motor_controller",
  		SCHED_DEFAULT,
- 		SCHED_PRIORITY_MAX,
+ 		SCHED_PRIORITY_MAX-50,
  		3000,
  		(px4_main_t)&MotorController::task_main_trampoline,
  		nullptr);

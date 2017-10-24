@@ -97,8 +97,8 @@
 // James adds
 #include <uORB/topics/motor_kill.h>
 #include <uORB/topics/rotor_rpm.h>
-#include <v2.0/B-1000/mavlink_msg_rotorrpm.h>
-#include <v2.0/B-1000/mavlink_msg_motorkill.h>
+#include <v2.0/B1000/mavlink_msg_rotorrpm.h>
+#include <v2.0/B1000/mavlink_msg_motorkill.h>
 
 static uint16_t cm_uint16_from_m_float(float m);
 static void get_mavlink_mode_state(struct vehicle_status_s *status, uint8_t *mavlink_state,

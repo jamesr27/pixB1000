@@ -1,9 +1,5 @@
-/* James Reeves. Motor (engine) controller for the B1000 helicopter.
-This does a few things:
-	1. Receives motor armed commands. From the standard uORB.
-	2. Receives the throttle command. This comes from the rc at present (channel 9, [8] in zero counting).
-	3. Receives the rpm from the rpm sensor (through uORB). (Must add the filing of the rotor rpm mavlink message to mavlink still).
-	4. Calculates the throttle output command (PID controller on throttle, or PD, or whatever works best). Published to uORB. We will assign the actuator value in the attitude controller or wherever this is done these days.)
+/* James Reeves. Motor (engine) killer the B1000 helicopter.
+ 	 This operates the kill switch (an arduino connected via serial on port 4)
 */
 
 #include "motor_kill.h"
@@ -177,7 +173,7 @@ MotorKill::start()
 	/* start the task */
  	_control_task = px4_task_spawn_cmd("motor_kill",
  		SCHED_DEFAULT,
- 		SCHED_PRIORITY_MAX,
+ 		SCHED_PRIORITY_MAX-100,
  		1500,
  		(px4_main_t)&MotorKill::task_main_trampoline,
  		nullptr);

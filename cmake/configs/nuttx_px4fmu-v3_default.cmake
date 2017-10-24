@@ -132,7 +132,7 @@ set(config_module_list
     #
     modules/motor_controller
     modules/motor_kill
-
+    modules/rotor_rpm_reader
 
 	#
 	# Logging

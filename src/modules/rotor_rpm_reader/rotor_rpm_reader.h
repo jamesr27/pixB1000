@@ -1,4 +1,5 @@
-// James Reeves
+// James Reeves.
+// Rotor rpm serial message handler
 
 #include <px4_config.h>
 #include <px4_defines.h>
@@ -22,12 +23,12 @@
 #include <systemlib/mavlink_log.h>
 #include <platforms/px4_defines.h>
 #include <uORB/uORB.h>
-#include <uORB/topics/motor_kill.h>
+#include <uORB/topics/rotor_rpm.h>
 
 
- extern "C" __EXPORT int motor_kill_main(int argc, char *argv[]);
+ extern "C" __EXPORT int rotor_rpm_reader_main(int argc, char *argv[]);
 
- class MotorKill
+ class RotorRpmReader
  {
  public:
 
@@ -35,17 +36,13 @@
 	 * Constructorrc_channels
 	 */
 
-	 MotorKill();
+	 RotorRpmReader();
 
 	/**
 	 * Destructor, also kills task.
 	 */
 
-	 ~MotorKill();
-
-
-	 void 		poll_all();
-
+	 ~RotorRpmReader();
 
 	/**
 	 * Shim for calling task_main from task_create.
@@ -68,8 +65,7 @@
 		bool 					_task_should_exit;
 		int						_control_task;
 
+		orb_advert_t			_rotor_rpm_pub;
+		rotor_rpm_s 			_rotor_rpm;
 
-		int 					_motor_kill_sub;
-
-		motor_kill_s			_motor_kill;
 	};

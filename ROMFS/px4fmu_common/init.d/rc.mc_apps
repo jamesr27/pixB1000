@@ -50,3 +50,4 @@ land_detector start multicopter
 # Start the rotor rpm and motor kill modules module
 motor_controller start
 motor_kill start
+rotor_rpm_reader start
