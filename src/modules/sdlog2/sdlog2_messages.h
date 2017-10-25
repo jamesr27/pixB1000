@@ -639,6 +639,12 @@ struct log_STCK_s {
 	uint16_t stack_free;
 };
 
+// James adds rotor rpm to the sdlog2.
+#define LOG_RRPM_MSG 64
+struct log_RRPM_s {
+	float rpm;
+};
+
 /********** SYSTEM MESSAGES, ID > 0x80 **********/
 
 /* --- TIME - TIME STAMP --- */
@@ -734,7 +740,8 @@ static const struct log_format_s log_formats[] = {
 	/* FMT: don't write format of format message, it's useless */
 	LOG_FORMAT(TIME, "Q", "StartTime"),
 	LOG_FORMAT(VER, "NZ", "Arch,FwGit"),
-	LOG_FORMAT(PARM, "Zf", "Name,Value")
+	LOG_FORMAT(PARM, "Zf", "Name,Value"),
+	LOG_FORMAT(RRPM, "f", "rpm")
 };
 
 static const unsigned log_formats_num = sizeof(log_formats) / sizeof(log_formats[0]);

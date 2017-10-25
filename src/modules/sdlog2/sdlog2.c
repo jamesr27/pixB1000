@@ -114,6 +114,9 @@
 #include "sdlog2_format.h"
 #include "sdlog2_messages.h"
 
+// James adds rotor rpm
+#include <uORB/topics/rotor_rpm.h>
+
 #define PX4_EPOCH_SECS 1234567890L
 
 #define LOGBUFFER_WRITE_AND_COUNT(_msg) pthread_mutex_lock(&logbuffer_mutex); \
@@ -1207,6 +1210,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 		struct cpuload_s cpuload;
 		struct vehicle_gps_position_s dual_gps_pos;
 		struct task_stack_info_s task_stack_info;
+		struct rotor_rpm_s rotor_rpm;
 	} buf;
 
 	memset(&buf, 0, sizeof(buf));
@@ -1270,6 +1274,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 			struct log_LOAD_s log_LOAD;
 			struct log_DPRS_s log_DPRS;
 			struct log_STCK_s log_STCK;
+			struct log_RRPM_s log_RRPM;
 		} body;
 	} log_msg = {
 		LOG_PACKET_HEADER_INIT(0)
@@ -1321,6 +1326,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 		int cpuload_sub;
 		int diff_pres_sub;
 		int task_stack_info_sub;
+		int rotor_rpm_sub;
 	} subs;
 
 	subs.cmd_sub = -1;
@@ -1365,6 +1371,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 	subs.cpuload_sub = -1;
 	subs.diff_pres_sub = -1;
 	subs.task_stack_info_sub = -1;
+	subs.rotor_rpm_sub = -1;
 
 	/* add new topics HERE */
 
@@ -2306,6 +2313,13 @@ int sdlog2_thread_main(int argc, char *argv[])
 			strncpy(log_msg.body.log_STCK.task_name, (char*)buf.task_stack_info.task_name,
 					sizeof(log_msg.body.log_STCK.task_name));
 			LOGBUFFER_WRITE_AND_COUNT(STCK);
+		}
+
+		/* --- ROTORRPM --- */
+		if (copy_if_updated(ORB_ID(rotor_rpm), &subs.rotor_rpm_sub, &buf.rotor_rpm)) {
+			log_msg.msg_type = LOG_RRPM_MSG;
+			log_msg.body.log_RRPM.rpm = buf.rotor_rpm.rpm;
+			LOGBUFFER_WRITE_AND_COUNT(RRPM);
 		}
 
 		pthread_mutex_lock(&logbuffer_mutex);
