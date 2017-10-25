@@ -176,6 +176,8 @@ MotorController::run_controller(float dt)
 		 _switch_state = 2;
 	 }
 
+	 //printf("Switch state: %d\n",_switch_state);
+
 	 // 2: Set the state of the kill switch
 	 if (!_actuator_armed.armed)
 	 {
@@ -191,8 +193,10 @@ MotorController::run_controller(float dt)
 	 }
 
 
+
 	 if (_actuator_armed.armed)
 	 {
+
 		 // Case 1: Throttle command is off. Do nothing.
 		 if (_switch_state == 0)
 		{
@@ -201,10 +205,11 @@ MotorController::run_controller(float dt)
 			 _previous_error = 0.0f;
 			 _integral_sum = 0.0f;
 			 _filtered_rpm_command = 0.0f;
+			 //printf("in armed bit1\n");
 		}
 
 		 // Case 2: Rotor rpm is below cut-off. Then we perform a start procedure.
-		 else if (_switch_state == 1 && _rotor_rpm.rpm < _params.motor_control_startRpm)
+		 else if ((_switch_state == 1 || _switch_state == 2) && _rotor_rpm.rpm < _params.motor_control_startRpm)
 		 {
 			 // We put a start up sequence in here, to get the rotor spinning. For now it is increasing throttle at some
 			 // rate. We'll use a parameter to set this.
@@ -213,6 +218,7 @@ MotorController::run_controller(float dt)
 
 			 // Set the filtered_rpm_command to the current rpm? Will probably help with command jumps when we enable controller.
 			 _filtered_rpm_command = _rotor_rpm.rpm;
+			 //printf("in armed bit2\n");
 		 }
 
 		 // Case 3: We run the governor
@@ -232,8 +238,10 @@ MotorController::run_controller(float dt)
 
 			 // Run controller.
 			 _motor_throttle.throttle = pid(dt, _filtered_rpm_command, _params.motor_control_ilim, _params.motor_control_upSat, _params.motor_control_lowSat);
+			 //printf("in armed bit3\n");
 
 		 }
+		 //printf("Motor throttle: %0.3f\n",(double)_motor_throttle.throttle);
 	 }
 	 else if (!_actuator_armed.armed)
 	 {
@@ -242,6 +250,7 @@ MotorController::run_controller(float dt)
 		 _previous_error = 0.0f;
 		 _integral_sum = 0.0f;
 		 _filtered_rpm_command = 0.0f;
+		 //printf("in not armed bit\n");
 	 }
 
  }
