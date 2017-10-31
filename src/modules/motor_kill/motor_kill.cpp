@@ -89,8 +89,8 @@ MotorKill::task_main()
 	Serial_Port serial_port(uart_name, baudrate);
 	serial_port.start();
 
-	char *kill_on = (char*)"\x01\x7F";
-	char *kill_off = (char*)"\x00\x7F";
+	char *kill_on = (char*)"\x01\x01\x01\x7F";
+	char *kill_off = (char*)"\x00\x00\x00\x7F";
 
 	/* wakeup source */
  	px4_pollfd_struct_t fds[1];
@@ -147,7 +147,7 @@ MotorKill::task_main()
 				{
 					serial_port.write_bytes(kill_off);
 				}
-				usleep(10000);
+				usleep(5000);
 
 			}
 			// It will only go into this else once. This is used to initialise everything.

@@ -198,7 +198,7 @@ MotorController::run_controller(float dt)
 	 {
 
 		 // Case 1: Throttle command is off. Do nothing.
-		 if (_switch_state == 0)
+		 if (_switch_state == 0 || _motor_kill.kill_switch == true)
 		{
 			// Don't do anything, and keep integrators at zero to stop any winding up or down.
 			 _motor_throttle.throttle = 0.0f;
@@ -209,7 +209,7 @@ MotorController::run_controller(float dt)
 		}
 
 		 // Case 2: Rotor rpm is below cut-off. Then we perform a start procedure.
-		 else if ((_switch_state == 1 || _switch_state == 2) && _rotor_rpm.rpm < _params.motor_control_startRpm)
+		 else if ((_switch_state == 1 || _switch_state == 2) && _rotor_rpm.rpm < _params.motor_control_startRpm && _motor_kill.kill_switch == false)
 		 {
 			 // We put a start up sequence in here, to get the rotor spinning. For now it is increasing throttle at some
 			 // rate. We'll use a parameter to set this.
@@ -222,7 +222,7 @@ MotorController::run_controller(float dt)
 		 }
 
 		 // Case 3: We run the governor
-		 else if ((_switch_state == 1 || _switch_state == 2) && _rotor_rpm.rpm >= _params.motor_control_startRpm) // I.e. throttle is set to flight mode. Run the controller in full.
+		 else if ((_switch_state == 1 || _switch_state == 2) && _rotor_rpm.rpm >= _params.motor_control_startRpm && _motor_kill.kill_switch == false) // I.e. throttle is set to flight mode. Run the controller in full.
 		 {
 			 // Calculate the filtered rpm command. This is a rate transition from current rpm to target rpm at some rate.
 			 if (_switch_state == 1)
@@ -243,7 +243,7 @@ MotorController::run_controller(float dt)
 		 }
 		 //printf("Motor throttle: %0.3f\n",(double)_motor_throttle.throttle);
 	 }
-	 else if (!_actuator_armed.armed)
+	 else if (!_actuator_armed.armed || _motor_kill.kill_switch == true)
 	 {
 		 // Do nothing, and set integrator to zero.
 		 _motor_throttle.throttle = 0.0f;
