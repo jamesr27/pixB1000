@@ -34,12 +34,14 @@ namespace motor_controller {
 	/* publications */
  _motor_throttle_pub(nullptr),
  _motor_kill_pub(nullptr),
+ _motor_controller_log_pub(nullptr),
 
  _param_counter(0),
  _integral_sum(0),
  _previous_error(0),
  _switch_state(0),
- _filtered_rpm_command(0.0f)
+ _filtered_rpm_command(0.0f),
+ _throttle_offset(0.0f)
 
 
  {
@@ -48,6 +50,7 @@ namespace motor_controller {
  	memset(&_actuator_armed, 0, sizeof(_actuator_armed));
 	memset(&_rc_channels, 0, sizeof(_rc_channels));
 	memset(&_motor_kill, 0, sizeof(_motor_kill));
+	memset(&_motor_controller_log, 0, sizeof(_motor_controller_log));
 
  	_params_handles.motor_control_p			= 	param_find("MOTOR_C_P");
  	_params_handles.motor_control_i			= 	param_find("MOTOR_C_I");
@@ -197,19 +200,31 @@ MotorController::run_controller(float dt)
 	 if (_actuator_armed.armed)
 	 {
 
-		 // Case 1: Throttle command is off. Do nothing.
-		 if (_switch_state == 0 || _motor_kill.kill_switch == true)
+//		 // Case 0: Kill switch on, do nothing. This is handled in the if statement above us though...
+//		 if (_motor_kill.kill_switch == true)
+//		{
+//				// Don't do anything, and keep integrators at zero to stop any winding up or down.
+//				 _motor_throttle.throttle = 0.0f;
+//				 _previous_error = 0.0f;
+//				 _integral_sum = 0.0f;
+//				 _filtered_rpm_command = 0.0f;
+//				 //printf("in armed bit1\n");
+//		}
+
+		 // Case 1: Kill switch is off, and we are in throttle low position.
+		 if (_switch_state == 0 && _motor_kill.kill_switch == false)
 		{
 			// Don't do anything, and keep integrators at zero to stop any winding up or down.
 			 _motor_throttle.throttle = 0.0f;
 			 _previous_error = 0.0f;
 			 _integral_sum = 0.0f;
 			 _filtered_rpm_command = 0.0f;
+			 _motor_started = false;
 			 //printf("in armed bit1\n");
 		}
 
-		 // Case 2: Rotor rpm is below cut-off. Then we perform a start procedure.
-		 else if ((_switch_state == 1 || _switch_state == 2) && _rotor_rpm.rpm < _params.motor_control_startRpm && _motor_kill.kill_switch == false)
+		 // Case 2: If we are not started, run the start sequence.
+		 else if ((_switch_state == 1 || _switch_state == 2) && _motor_kill.kill_switch == false && _motor_started == false)
 		 {
 			 // We put a start up sequence in here, to get the rotor spinning. For now it is increasing throttle at some
 			 // rate. We'll use a parameter to set this.
@@ -218,12 +233,22 @@ MotorController::run_controller(float dt)
 
 			 // Set the filtered_rpm_command to the current rpm? Will probably help with command jumps when we enable controller.
 			 _filtered_rpm_command = _rotor_rpm.rpm;
+			 // Run controller in sympathy (we don't assign its output though). We are just using the rpm measured as the setpoint and measured value.
+			 pid(dt, _filtered_rpm_command, _params.motor_control_ilim, _params.motor_control_upSat, _params.motor_control_lowSat);
 			 //printf("in armed bit2\n");
+			 _throttle_offset = _motor_throttle.throttle;
+
+			 // Final thing to do is to set started if we are above critical rpm
+			 if (_rotor_rpm.rpm > _params.motor_control_startRpm)
+			 {
+				 _motor_started = true;
+			 }
 		 }
 
-		 // Case 3: We run the governor
-		 else if ((_switch_state == 1 || _switch_state == 2) && _rotor_rpm.rpm >= _params.motor_control_startRpm && _motor_kill.kill_switch == false) // I.e. throttle is set to flight mode. Run the controller in full.
+		 // Case 3: We run the governor if started.
+		 else if (((_switch_state == 1 || _switch_state == 2)) && _motor_kill.kill_switch == false && _motor_started) // Run the controller in full with appropraite set point.
 		 {
+
 			 // Calculate the filtered rpm command. This is a rate transition from current rpm to target rpm at some rate.
 			 if (_switch_state == 1)
 			 {
@@ -241,7 +266,7 @@ MotorController::run_controller(float dt)
 			 //printf("in armed bit3\n");
 
 		 }
-		 //printf("Motor throttle: %0.3f\n",(double)_motor_throttle.throttle);
+		// printf("MC: T: %0.3f SP: %0.3f RR: %0.3f\n",(double)_motor_throttle.throttle,(double)_filtered_rpm_command,(double)_rotor_rpm.rpm);
 	 }
 	 else if (!_actuator_armed.armed || _motor_kill.kill_switch == true)
 	 {
@@ -250,6 +275,7 @@ MotorController::run_controller(float dt)
 		 _previous_error = 0.0f;
 		 _integral_sum = 0.0f;
 		 _filtered_rpm_command = 0.0f;
+		 _motor_started = false;
 		 //printf("in not armed bit\n");
 	 }
 
@@ -273,7 +299,7 @@ MotorController::run_controller(float dt)
 	 }
 
 	 // Check saturation limits.
-	 float output = _params.motor_control_p * error + _params.motor_control_i * _integral_sum + _params.motor_control_d * derivative_error;
+	 float output = _throttle_offset + _params.motor_control_p * error + _params.motor_control_i * _integral_sum + _params.motor_control_d * derivative_error;
 
 	 if (output > _params.motor_control_upSat)
 	 {
@@ -318,7 +344,7 @@ MotorController::task_main()
  {
 	/* get an initial update for all sensor and status data */
  	parameters_update();
- 	printf("here1\n");
+ 	//printf("here1\n");
 
  	// Subscriptions
  	_rotor_rpm_sub = orb_subscribe(ORB_ID(rotor_rpm));
@@ -326,13 +352,13 @@ MotorController::task_main()
  	_rc_channels_sub = orb_subscribe(ORB_ID(rc_channels));
  	_vehicle_attitude_sub = orb_subscribe(ORB_ID(vehicle_attitude));
 
- 	printf("here2\n");
+ 	//printf("here2\n");
 	/* wakeup source */
  	px4_pollfd_struct_t fds[1];
  	fds[0].fd = _vehicle_attitude_sub;
  	fds[0].events = POLLIN;
 
- 	printf("here3\n");
+ 	//printf("here3\n");
  	int initialised = 0;
 
  	while (!_task_should_exit) {
@@ -367,9 +393,6 @@ MotorController::task_main()
 				dt = 0.02f;
 			}
 
-			// It hangs up without this sleep for some reason...
-			usleep(3000);
-
 			// If we are initialised we call the run_state_machine function.
 			if(initialised > 0) {
 
@@ -384,7 +407,10 @@ MotorController::task_main()
 
 				initialised++; //We start the state machine up as such.
 			}
-			assign_and_publish();
+			assign_and_publish(dt);
+
+			// It hangs up without this sleep for some reason...
+			usleep(1000);
  		}
  	}
 
@@ -392,10 +418,17 @@ MotorController::task_main()
  }
 
  void
-MotorController::assign_and_publish()
+MotorController::assign_and_publish(float dt)
  {
-	 // Assign. Everything we need has been assigned previously in the code.
-
+	 // Assign. We only assign to the log message here, as its data comes from all over the place
+	 _motor_controller_log.rpm = _rotor_rpm.rpm;
+	 _motor_controller_log.throttle = _motor_throttle.throttle;
+	 _motor_controller_log.switch_state = _switch_state;
+	 _motor_controller_log.started = _motor_started;
+	 _motor_controller_log.kill_switch = _motor_kill.kill_switch;
+	 _motor_controller_log.filtered_rpm_command = _filtered_rpm_command;
+	 _motor_controller_log.throttle_offset = _throttle_offset;
+	 _motor_controller_log.dt = dt;
 
 	 // Publish - All orb publishing is done in one go here.
 	 if (_motor_throttle_pub != nullptr) orb_publish(ORB_ID(motor_throttle), _motor_throttle_pub, &_motor_throttle);
@@ -405,7 +438,9 @@ MotorController::assign_and_publish()
 	 if (_motor_kill_pub != nullptr) orb_publish(ORB_ID(motor_kill), _motor_kill_pub, &_motor_kill);
      else _motor_kill_pub = orb_advertise(ORB_ID(motor_kill), &_motor_kill);
 
-
+	 // 3: Motor controller log
+	 if (_motor_controller_log_pub != nullptr) orb_publish(ORB_ID(motor_controller_log), _motor_controller_log_pub, &_motor_controller_log);
+     else _motor_controller_log_pub = orb_advertise(ORB_ID(motor_controller_log), &_motor_controller_log);
 
 	 return;
  }

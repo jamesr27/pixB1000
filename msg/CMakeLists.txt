@@ -128,6 +128,7 @@ set(msg_file_names
 	motor_kill.msg
 	rotor_rpm.msg
 	motor_throttle.msg
+	motor_controller_log.msg
 	)
 
 # Get absolute paths

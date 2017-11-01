@@ -1725,6 +1725,14 @@ int sdlog2_thread_main(int argc, char *argv[])
 				}
 			}
 
+			/* --- ROTORRPM --- */
+			if (copy_if_updated(ORB_ID(rotor_rpm), &subs.rotor_rpm_sub, &buf.rotor_rpm)) {
+				log_msg.msg_type = LOG_RRPM_MSG;
+				log_msg.body.log_RRPM.rpm = buf.rotor_rpm.rpm;
+				LOGBUFFER_WRITE_AND_COUNT(RRPM);
+			}
+
+
 			/* --- VTOL VEHICLE STATUS --- */
 			if(copy_if_updated(ORB_ID(vtol_vehicle_status), &subs.vtol_status_sub, &buf.vtol_status)) {
 				log_msg.msg_type = LOG_VTOL_MSG;
@@ -2315,12 +2323,7 @@ int sdlog2_thread_main(int argc, char *argv[])
 			LOGBUFFER_WRITE_AND_COUNT(STCK);
 		}
 
-		/* --- ROTORRPM --- */
-		if (copy_if_updated(ORB_ID(rotor_rpm), &subs.rotor_rpm_sub, &buf.rotor_rpm)) {
-			log_msg.msg_type = LOG_RRPM_MSG;
-			log_msg.body.log_RRPM.rpm = buf.rotor_rpm.rpm;
-			LOGBUFFER_WRITE_AND_COUNT(RRPM);
-		}
+
 
 		pthread_mutex_lock(&logbuffer_mutex);
 

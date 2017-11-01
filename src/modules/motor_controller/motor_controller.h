@@ -41,6 +41,7 @@
 #include <uORB/topics/rc_channels.h>
 #include <uORB/topics/actuator_armed.h>
 #include <uORB/topics/motor_kill.h>
+#include <uORB/topics/motor_controller_log.h>
 
 
  extern "C" __EXPORT int motor_controller_main(int argc, char *argv[]);
@@ -65,7 +66,7 @@
 	 int		parameters_update(); 
 
 
-	 void 		assign_and_publish();
+	 void 		assign_and_publish(float dt);
 
 
 	 void 		poll_all();
@@ -104,6 +105,7 @@
 		int						_vehicle_attitude_sub;
 		orb_advert_t 			_motor_throttle_pub;
 		orb_advert_t			_motor_kill_pub;
+		orb_advert_t			_motor_controller_log_pub;
 
 		int 					_param_counter;
 
@@ -113,6 +115,8 @@
 		int						_switch_state;	//0 - off, 1 - idle, 2- flight.
 		float					_filtered_rpm_command; //[0-flightRpm], but passed through rate transition.
 															// Used as input to pid controller.
+		float 					_throttle_offset;	// [0:1] offset is recorded once we have started.
+		bool 					_motor_started;		// False if we haven't started.
 
 
 		rotor_rpm_s 			_rotor_rpm;
@@ -120,6 +124,7 @@
 		actuator_armed_s		_actuator_armed;
 		rc_channels_s			_rc_channels;
 		motor_kill_s			_motor_kill;
+		motor_controller_log_s	_motor_controller_log;
 
 
 		struct {

@@ -51,6 +51,7 @@
 #include <uORB/topics/vehicle_gps_position.h>
 #include <uORB/topics/vehicle_command.h>
 #include <uORB/topics/vehicle_command_ack.h>
+#include <uORB/topics/motor_controller_log.h>
 
 #include <drivers/drv_hrt.h>
 #include <px4_includes.h>
@@ -615,6 +616,9 @@ void Logger::add_common_topics()
 	add_topic("vehicle_vision_position");
 	add_topic("vtol_vehicle_status", 100);
 	add_topic("wind_estimate", 100);
+
+	// James adds the motor controller stuff
+	add_topic("motor_controller_log",100);
 }
 
 void Logger::add_estimator_replay_topics()

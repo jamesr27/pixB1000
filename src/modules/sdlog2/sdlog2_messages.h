@@ -640,7 +640,7 @@ struct log_STCK_s {
 };
 
 // James adds rotor rpm to the sdlog2.
-#define LOG_RRPM_MSG 64
+#define LOG_RRPM_MSG 65
 struct log_RRPM_s {
 	float rpm;
 };
