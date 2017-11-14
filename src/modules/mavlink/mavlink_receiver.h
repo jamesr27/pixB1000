@@ -86,8 +86,9 @@
 
 // B-1000 additions
 #include <uORB/topics/rotor_rpm.h>
+/* Now in common
 #include <v2.0/B1000/mavlink_msg_rotorrpm.h>
-
+*/
 
 #define PX4_EPOCH_SECS 1234567890ULL
 

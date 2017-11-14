@@ -229,7 +229,18 @@ MotorController::run_controller(float dt)
 			 // We put a start up sequence in here, to get the rotor spinning. For now it is increasing throttle at some
 			 // rate. We'll use a parameter to set this.
 			 // Once this has finished we switch over to governing with the pid in idle mode.
-			 _motor_throttle.throttle = _motor_throttle.throttle + _params.motor_control_startRate;
+			 _motor_throttle.throttle = _motor_throttle.throttle + _params.motor_control_startRate * dt / 1000.0f;
+
+			 // Do saturation limits
+			 if (_motor_throttle.throttle > _params.motor_control_upSat)
+			 {
+				 _motor_throttle.throttle = _params.motor_control_upSat;
+			 }
+			 if (_motor_throttle.throttle < _params.motor_control_lowSat)
+			 {
+				 _motor_throttle.throttle = _params.motor_control_lowSat;
+			 }
+
 
 			 // Set the filtered_rpm_command to the current rpm? Will probably help with command jumps when we enable controller.
 			 _filtered_rpm_command = _rotor_rpm.rpm;
@@ -239,33 +250,33 @@ MotorController::run_controller(float dt)
 			 _throttle_offset = _motor_throttle.throttle;
 
 			 // Final thing to do is to set started if we are above critical rpm
-			 if (_rotor_rpm.rpm > _params.motor_control_startRpm)
-			 {
-				 _motor_started = true;
-			 }
+//			 if (_rotor_rpm.rpm > _params.motor_control_startRpm)
+//			 {
+//				 _motor_started = true;
+//			 }
 		 }
 
-		 // Case 3: We run the governor if started.
-		 else if (((_switch_state == 1 || _switch_state == 2)) && _motor_kill.kill_switch == false && _motor_started) // Run the controller in full with appropraite set point.
-		 {
-
-			 // Calculate the filtered rpm command. This is a rate transition from current rpm to target rpm at some rate.
-			 if (_switch_state == 1)
-			 {
-				 // Rate transition command to idle rpm.
-				 rate_transition(_filtered_rpm_command, _params.motor_control_idleRpm,dt);
-			 }
-			 if (_switch_state == 2)
-			 {
-				 // Rate transition command to flight rpm.
-				 rate_transition(_filtered_rpm_command, _params.motor_control_nomRpm,dt);
-			 }
-
-			 // Run controller.
-			 _motor_throttle.throttle = pid(dt, _filtered_rpm_command, _params.motor_control_ilim, _params.motor_control_upSat, _params.motor_control_lowSat);
-			 //printf("in armed bit3\n");
-
-		 }
+//		 // Case 3: We run the governor if started.
+//		 else if (((_switch_state == 1 || _switch_state == 2)) && _motor_kill.kill_switch == false && _motor_started) // Run the controller in full with appropraite set point.
+//		 {
+//
+//			 // Calculate the filtered rpm command. This is a rate transition from current rpm to target rpm at some rate.
+//			 if (_switch_state == 1)
+//			 {
+//				 // Rate transition command to idle rpm.
+//				 rate_transition(_filtered_rpm_command, _params.motor_control_idleRpm,dt);
+//			 }
+//			 if (_switch_state == 2)
+//			 {
+//				 // Rate transition command to flight rpm.
+//				 rate_transition(_filtered_rpm_command, _params.motor_control_nomRpm,dt);
+//			 }
+//
+//			 // Run controller.
+//			 _motor_throttle.throttle = pid(dt, _filtered_rpm_command, _params.motor_control_ilim, _params.motor_control_upSat, _params.motor_control_lowSat);
+//			 //printf("in armed bit3\n");
+//
+//		 }
 		// printf("MC: T: %0.3f SP: %0.3f RR: %0.3f\n",(double)_motor_throttle.throttle,(double)_filtered_rpm_command,(double)_rotor_rpm.rpm);
 	 }
 	 else if (!_actuator_armed.armed || _motor_kill.kill_switch == true)
@@ -299,7 +310,7 @@ MotorController::run_controller(float dt)
 	 }
 
 	 // Check saturation limits.
-	 float output = _throttle_offset + _params.motor_control_p * error + _params.motor_control_i * _integral_sum + _params.motor_control_d * derivative_error;
+	 float output = _throttle_offset + _params.motor_control_p / 1000.0f * error + _params.motor_control_i / 1000.0f * _integral_sum + _params.motor_control_d / 1000.0f * derivative_error;
 
 	 if (output > _params.motor_control_upSat)
 	 {
@@ -420,6 +431,8 @@ MotorController::task_main()
  void
 MotorController::assign_and_publish(float dt)
  {
+	 //printf("rpm is: %0.3f\n",(double)_rotor_rpm.rpm);
+
 	 // Assign. We only assign to the log message here, as its data comes from all over the place
 	 _motor_controller_log.rpm = _rotor_rpm.rpm;
 	 _motor_controller_log.throttle = _motor_throttle.throttle;

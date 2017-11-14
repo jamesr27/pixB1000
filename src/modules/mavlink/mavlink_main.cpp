@@ -1983,145 +1983,175 @@ Mavlink::task_main(int argc, char *argv[])
 
 	}
 
-	switch (_mode) {
-	// James adds some message here.
-	case MAVLINK_MODE_NORMAL:
-		configure_stream("SYS_STATUS", 1.0f);
-		configure_stream("EXTENDED_SYS_STATE", 1.0f);
-		configure_stream("HIGHRES_IMU", 1.5f);
-		configure_stream("ATTITUDE", 2.0f);
-		configure_stream("RC_CHANNELS", 1.0f);
-		configure_stream("SERVO_OUTPUT_RAW_0", 1.0f);
-		configure_stream("ALTITUDE", 1.0f);
-		configure_stream("GPS_RAW_INT", 1.0f);
-		configure_stream("ADSB_VEHICLE", 1.0f);
-		configure_stream("COLLISION", 0.5f);
-		configure_stream("DISTANCE_SENSOR", 0.5f);
-		configure_stream("OPTICAL_FLOW_RAD", 1.0f);
-		configure_stream("VISION_POSITION_ESTIMATE", 1.0f);
-		configure_stream("ESTIMATOR_STATUS", 0.5f);
-		configure_stream("NAV_CONTROLLER_OUTPUT", 1.0f);
-		configure_stream("GLOBAL_POSITION_INT", 1.0f);
-		configure_stream("LOCAL_POSITION_NED", 1.0f);
-		configure_stream("POSITION_TARGET_LOCAL_NED", 1.0f);
-		configure_stream("POSITION_TARGET_GLOBAL_INT", 1.0f);
-		configure_stream("ATTITUDE_TARGET", 1.0f);
-		configure_stream("HOME_POSITION", 0.5f);
-		configure_stream("NAMED_VALUE_FLOAT", 1.0f);
-		configure_stream("VFR_HUD", 4.0f);
-		configure_stream("WIND_COV", 1.0f);
-		// James adds
-		configure_stream("MOTOR_KILL",0.2f);
-		configure_stream("ROTOR_RPM",1.0f);
+	// Still going to configure manually.
+	configure_stream("SYS_STATUS", 1.0f);
+	configure_stream("EXTENDED_SYS_STATE", 1.0f);
+	configure_stream("HIGHRES_IMU", 1.5f);
+	configure_stream("ATTITUDE", 2.0f);
+	configure_stream("RC_CHANNELS", 1.0f);
+	configure_stream("SERVO_OUTPUT_RAW_0", 1.0f);
+	configure_stream("ALTITUDE", 1.0f);
+	configure_stream("GPS_RAW_INT", 1.0f);
+	configure_stream("ADSB_VEHICLE", 1.0f);
+	configure_stream("COLLISION", 0.5f);
+	configure_stream("DISTANCE_SENSOR", 0.5f);
+	configure_stream("OPTICAL_FLOW_RAD", 1.0f);
+	configure_stream("VISION_POSITION_ESTIMATE", 1.0f);
+	configure_stream("ESTIMATOR_STATUS", 0.5f);
+	configure_stream("NAV_CONTROLLER_OUTPUT", 1.0f);
+	configure_stream("GLOBAL_POSITION_INT", 1.0f);
+	configure_stream("LOCAL_POSITION_NED", 1.0f);
+	configure_stream("POSITION_TARGET_LOCAL_NED", 1.0f);
+	configure_stream("POSITION_TARGET_GLOBAL_INT", 1.0f);
+	configure_stream("ATTITUDE_TARGET", 1.0f);
+	configure_stream("HOME_POSITION", 0.5f);
+	configure_stream("NAMED_VALUE_FLOAT", 1.0f);
+	configure_stream("VFR_HUD", 4.0f);
+	configure_stream("WIND_COV", 1.0f);
+	// James adds
+	configure_stream("MOTORKILL",0.2f);
+	configure_stream("ROTORRPM",2.0f);
 
-	case MAVLINK_MODE_ONBOARD:
-		configure_stream("SYS_STATUS", 5.0f);
-		configure_stream("EXTENDED_SYS_STATE", 5.0f);
-		configure_stream("HIGHRES_IMU", 50.0f);
-		configure_stream("ATTITUDE", 250.0f);
-		configure_stream("ATTITUDE_QUATERNION", 50.0f);
-		configure_stream("RC_CHANNELS", 20.0f);
-		configure_stream("SERVO_OUTPUT_RAW_0", 10.0f);
-		configure_stream("ALTITUDE", 10.0f);
-		configure_stream("GPS_RAW_INT", 5.0f);
-		configure_stream("ADSB_VEHICLE", 10.0f);
-		configure_stream("COLLISION", 10.0f);
-		configure_stream("DISTANCE_SENSOR", 10.0f);
-		configure_stream("OPTICAL_FLOW_RAD", 10.0f);
-		configure_stream("VISION_POSITION_ESTIMATE", 10.0f);
-		configure_stream("ESTIMATOR_STATUS", 1.0f);
-		configure_stream("NAV_CONTROLLER_OUTPUT", 10.0f);
-		configure_stream("GLOBAL_POSITION_INT", 50.0f);
-		configure_stream("LOCAL_POSITION_NED", 30.0f);
-		configure_stream("POSITION_TARGET_GLOBAL_INT", 10.0f);
-		configure_stream("ATTITUDE_TARGET", 10.0f);
-		configure_stream("HOME_POSITION", 0.5f);
-		configure_stream("NAMED_VALUE_FLOAT", 10.0f);
-		configure_stream("VFR_HUD", 10.0f);
-		configure_stream("WIND_COV", 10.0f);
-		configure_stream("POSITION_TARGET_LOCAL_NED", 10.0f);
-		configure_stream("SYSTEM_TIME", 1.0f);
-		configure_stream("TIMESYNC", 10.0f);
-		configure_stream("CAMERA_CAPTURE", 2.0f);
-		//camera trigger is rate limited at the source, do not limit here
-		configure_stream("CAMERA_TRIGGER", 500.0f);
-		configure_stream("CAMERA_IMAGE_CAPTURED", 5.0f);
-		configure_stream("ACTUATOR_CONTROL_TARGET0", 10.0f);
 
-		// James adds
-		configure_stream("MOTOR_KILL",0.2f);
-		configure_stream("ROTOR_RPM",1.0f);
-		break;
-
-	case MAVLINK_MODE_OSD:
-		configure_stream("SYS_STATUS", 15.0f);
-		configure_stream("EXTENDED_SYS_STATE", 1.0f);
-		configure_stream("ATTITUDE", 2.0f);
-		configure_stream("RC_CHANNELS", 1.0f);
-		configure_stream("SERVO_OUTPUT_RAW_0", 1.0f);
-		configure_stream("ALTITUDE", 1.0f);
-		configure_stream("GPS_RAW_INT", 1.0f);
-		configure_stream("ESTIMATOR_STATUS", 1.0f);
-		configure_stream("GLOBAL_POSITION_INT", 5.0f);
-		configure_stream("ATTITUDE_TARGET", 5.0f);
-		configure_stream("HOME_POSITION", 0.5f);
-		configure_stream("VFR_HUD", 5.0f);
-		configure_stream("WIND_COV", 2.0f);
-		configure_stream("SYSTEM_TIME", 1.0f);
-
-		// James adds
-		configure_stream("MOTOR_KILL",0.2f);
-		configure_stream("ROTOR_RPM",1.0f);
-		break;
-
-	case MAVLINK_MODE_MAGIC:
-		//stream nothing
-		break;
-
-	case MAVLINK_MODE_CONFIG:
-		// Enable a number of interesting streams we want via USB
-		configure_stream("SYS_STATUS", 1.0f);
-		configure_stream("EXTENDED_SYS_STATE", 2.0f);
-		configure_stream("HIGHRES_IMU", 50.0f);
-		configure_stream("ATTITUDE", 50.0f);
-		configure_stream("ATTITUDE_QUATERNION", 50.0f);
-		configure_stream("RC_CHANNELS", 10.0f);
-		configure_stream("SERVO_OUTPUT_RAW_0", 20.0f);
-		configure_stream("SERVO_OUTPUT_RAW_1", 20.0f);
-		configure_stream("ALTITUDE", 10.0f);
-		configure_stream("GPS_RAW_INT", 10.0f);
-		configure_stream("ADSB_VEHICLE", 20.0f);
-		configure_stream("COLLISION", 20.0f);
-		configure_stream("DISTANCE_SENSOR", 10.0f);
-		configure_stream("OPTICAL_FLOW_RAD", 10.0f);
-		configure_stream("VISION_POSITION_ESTIMATE", 10.0f);
-		configure_stream("ESTIMATOR_STATUS", 5.0f);
-		configure_stream("NAV_CONTROLLER_OUTPUT", 10.0f);
-		configure_stream("GLOBAL_POSITION_INT", 10.0f);
-		configure_stream("LOCAL_POSITION_NED", 30.0f);
-		configure_stream("POSITION_TARGET_GLOBAL_INT", 10.0f);
-		configure_stream("ATTITUDE_TARGET", 8.0f);
-		configure_stream("HOME_POSITION", 0.5f);
-		configure_stream("NAMED_VALUE_FLOAT", 50.0f);
-		configure_stream("VFR_HUD", 20.0f);
-		configure_stream("WIND_COV", 10.0f);
-		configure_stream("CAMERA_TRIGGER", 500.0f);
-		configure_stream("CAMERA_IMAGE_CAPTURED", 5.0f);
-		configure_stream("ACTUATOR_CONTROL_TARGET0", 30.0f);
-		configure_stream("MANUAL_CONTROL", 5.0f);
-
-		// James adds
-		configure_stream("MOTOR_KILL",0.2f);
-		configure_stream("ROTOR_RPM",1.0f);
-		break;
-
-	case MAVLINK_MODE_IRIDIUM:
-		configure_stream("HIGH_LATENCY", 0.1f);
-		break;
-
-	default:
-		break;
-	}
+//	switch (_mode) {
+//	// James adds some message here.
+//	case MAVLINK_MODE_NORMAL:
+//		configure_stream("SYS_STATUS", 1.0f);
+//		configure_stream("EXTENDED_SYS_STATE", 1.0f);
+//		configure_stream("HIGHRES_IMU", 1.5f);
+//		configure_stream("ATTITUDE", 2.0f);
+//		configure_stream("RC_CHANNELS", 1.0f);
+//		configure_stream("SERVO_OUTPUT_RAW_0", 1.0f);
+//		configure_stream("ALTITUDE", 1.0f);
+//		configure_stream("GPS_RAW_INT", 1.0f);
+//		configure_stream("ADSB_VEHICLE", 1.0f);
+//		configure_stream("COLLISION", 0.5f);
+//		configure_stream("DISTANCE_SENSOR", 0.5f);
+//		configure_stream("OPTICAL_FLOW_RAD", 1.0f);
+//		configure_stream("VISION_POSITION_ESTIMATE", 1.0f);
+//		configure_stream("ESTIMATOR_STATUS", 0.5f);
+//		configure_stream("NAV_CONTROLLER_OUTPUT", 1.0f);
+//		configure_stream("GLOBAL_POSITION_INT", 1.0f);
+//		configure_stream("LOCAL_POSITION_NED", 1.0f);
+//		configure_stream("POSITION_TARGET_LOCAL_NED", 1.0f);
+//		configure_stream("POSITION_TARGET_GLOBAL_INT", 1.0f);
+//		configure_stream("ATTITUDE_TARGET", 1.0f);
+//		configure_stream("HOME_POSITION", 0.5f);
+//		configure_stream("NAMED_VALUE_FLOAT", 1.0f);
+//		configure_stream("VFR_HUD", 4.0f);
+//		configure_stream("WIND_COV", 1.0f);
+//		// James adds
+//		configure_stream("MOTORKILL",0.2f);
+//		configure_stream("ROTORRPM",2.0f);
+//
+//	case MAVLINK_MODE_ONBOARD:
+//		configure_stream("SYS_STATUS", 5.0f);
+//		configure_stream("EXTENDED_SYS_STATE", 5.0f);
+//		configure_stream("HIGHRES_IMU", 50.0f);
+//		configure_stream("ATTITUDE", 250.0f);
+//		configure_stream("ATTITUDE_QUATERNION", 50.0f);
+//		configure_stream("RC_CHANNELS", 20.0f);
+//		configure_stream("SERVO_OUTPUT_RAW_0", 10.0f);
+//		configure_stream("ALTITUDE", 10.0f);
+//		configure_stream("GPS_RAW_INT", 5.0f);
+//		configure_stream("ADSB_VEHICLE", 10.0f);
+//		configure_stream("COLLISION", 10.0f);
+//		configure_stream("DISTANCE_SENSOR", 10.0f);
+//		configure_stream("OPTICAL_FLOW_RAD", 10.0f);
+//		configure_stream("VISION_POSITION_ESTIMATE", 10.0f);
+//		configure_stream("ESTIMATOR_STATUS", 1.0f);
+//		configure_stream("NAV_CONTROLLER_OUTPUT", 10.0f);
+//		configure_stream("GLOBAL_POSITION_INT", 50.0f);
+//		configure_stream("LOCAL_POSITION_NED", 30.0f);
+//		configure_stream("POSITION_TARGET_GLOBAL_INT", 10.0f);
+//		configure_stream("ATTITUDE_TARGET", 10.0f);
+//		configure_stream("HOME_POSITION", 0.5f);
+//		configure_stream("NAMED_VALUE_FLOAT", 10.0f);
+//		configure_stream("VFR_HUD", 10.0f);
+//		configure_stream("WIND_COV", 10.0f);
+//		configure_stream("POSITION_TARGET_LOCAL_NED", 10.0f);
+//		configure_stream("SYSTEM_TIME", 1.0f);
+//		configure_stream("TIMESYNC", 10.0f);
+//		configure_stream("CAMERA_CAPTURE", 2.0f);
+//		//camera trigger is rate limited at the source, do not limit here
+//		configure_stream("CAMERA_TRIGGER", 500.0f);
+//		configure_stream("CAMERA_IMAGE_CAPTURED", 5.0f);
+//		configure_stream("ACTUATOR_CONTROL_TARGET0", 10.0f);
+//
+//		// James adds
+//		configure_stream("MOTORKILL",0.2f);
+//		configure_stream("ROTORRPM",2.0f);
+//		break;
+//
+//	case MAVLINK_MODE_OSD:
+//		configure_stream("SYS_STATUS", 15.0f);
+//		configure_stream("EXTENDED_SYS_STATE", 1.0f);
+//		configure_stream("ATTITUDE", 2.0f);
+//		configure_stream("RC_CHANNELS", 1.0f);
+//		configure_stream("SERVO_OUTPUT_RAW_0", 1.0f);
+//		configure_stream("ALTITUDE", 1.0f);
+//		configure_stream("GPS_RAW_INT", 1.0f);
+//		configure_stream("ESTIMATOR_STATUS", 1.0f);
+//		configure_stream("GLOBAL_POSITION_INT", 5.0f);
+//		configure_stream("ATTITUDE_TARGET", 5.0f);
+//		configure_stream("HOME_POSITION", 0.5f);
+//		configure_stream("VFR_HUD", 5.0f);
+//		configure_stream("WIND_COV", 2.0f);
+//		configure_stream("SYSTEM_TIME", 1.0f);
+//
+//		// James adds
+//		configure_stream("MOTORKILL",0.2f);
+//		configure_stream("ROTORRPM",2.0f);
+//		break;
+//
+//	case MAVLINK_MODE_MAGIC:
+//		//stream nothing
+//		break;
+//
+//	case MAVLINK_MODE_CONFIG:
+//		// Enable a number of interesting streams we want via USB
+//		configure_stream("SYS_STATUS", 1.0f);
+//		configure_stream("EXTENDED_SYS_STATE", 2.0f);
+//		configure_stream("HIGHRES_IMU", 50.0f);
+//		configure_stream("ATTITUDE", 50.0f);
+//		configure_stream("ATTITUDE_QUATERNION", 50.0f);
+//		configure_stream("RC_CHANNELS", 10.0f);
+//		configure_stream("SERVO_OUTPUT_RAW_0", 20.0f);
+//		configure_stream("SERVO_OUTPUT_RAW_1", 20.0f);
+//		configure_stream("ALTITUDE", 10.0f);
+//		configure_stream("GPS_RAW_INT", 10.0f);
+//		configure_stream("ADSB_VEHICLE", 20.0f);
+//		configure_stream("COLLISION", 20.0f);
+//		configure_stream("DISTANCE_SENSOR", 10.0f);
+//		configure_stream("OPTICAL_FLOW_RAD", 10.0f);
+//		configure_stream("VISION_POSITION_ESTIMATE", 10.0f);
+//		configure_stream("ESTIMATOR_STATUS", 5.0f);
+//		configure_stream("NAV_CONTROLLER_OUTPUT", 10.0f);
+//		configure_stream("GLOBAL_POSITION_INT", 10.0f);
+//		configure_stream("LOCAL_POSITION_NED", 30.0f);
+//		configure_stream("POSITION_TARGET_GLOBAL_INT", 10.0f);
+//		configure_stream("ATTITUDE_TARGET", 8.0f);
+//		configure_stream("HOME_POSITION", 0.5f);
+//		configure_stream("NAMED_VALUE_FLOAT", 50.0f);
+//		configure_stream("VFR_HUD", 20.0f);
+//		configure_stream("WIND_COV", 10.0f);
+//		configure_stream("CAMERA_TRIGGER", 500.0f);
+//		configure_stream("CAMERA_IMAGE_CAPTURED", 5.0f);
+//		configure_stream("ACTUATOR_CONTROL_TARGET0", 30.0f);
+//		configure_stream("MANUAL_CONTROL", 5.0f);
+//
+//		// James adds
+//		configure_stream("MOTORKILL",0.2f);
+//		configure_stream("ROTORRPM",2.0f);
+//		break;
+//
+//	case MAVLINK_MODE_IRIDIUM:
+//		configure_stream("HIGH_LATENCY", 0.1f);
+//		break;
+//
+//	default:
+//		break;
+//	}
 
 	/* set main loop delay depending on data rate to minimize CPU overhead */
 	_main_loop_delay = (MAIN_LOOP_DELAY * 1000) / _datarate;

@@ -97,8 +97,12 @@
 // James adds
 #include <uORB/topics/motor_kill.h>
 #include <uORB/topics/rotor_rpm.h>
+
+/* These are now in common
 #include <v2.0/B1000/mavlink_msg_rotorrpm.h>
 #include <v2.0/B1000/mavlink_msg_motorkill.h>
+*/
+
 
 static uint16_t cm_uint16_from_m_float(float m);
 static void get_mavlink_mode_state(struct vehicle_status_s *status, uint8_t *mavlink_state,
@@ -3997,7 +4001,7 @@ public:
 
 	static const char *get_name_static()
 	{
-		return "ROTOR_RPM";
+		return "ROTORRPM";
 	}
 
 	static uint16_t get_id_static()
@@ -4043,7 +4047,7 @@ protected:
 		if (rotor_rpm_updated) {
 
 			mavlink_rotorrpm_t msg = {};
-
+			//printf("ROTORRPM send if...\n");
 			msg.rpm = _rotor_rpm.rpm;
 			mavlink_msg_rotorrpm_send_struct(_mavlink->get_channel(), &msg);
 			}
@@ -4061,7 +4065,7 @@ public:
 
 	static const char *get_name_static()
 	{
-		return "MOTOR_KILL";
+		return "MOTORKILL";
 	}
 
 	static uint16_t get_id_static()
