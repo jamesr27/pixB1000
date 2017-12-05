@@ -2011,6 +2011,7 @@ Mavlink::task_main(int argc, char *argv[])
 	// James adds
 	configure_stream("MOTORKILL",0.2f);
 	configure_stream("ROTORRPM",2.0f);
+	configure_stream("ACTUATOR_CONTROL_TARGET0", 1.0f);
 
 
 //	switch (_mode) {

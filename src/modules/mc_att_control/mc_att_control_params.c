@@ -516,3 +516,51 @@ PARAM_DEFINE_FLOAT(MC_TPA_RATE_I, 0.0f);
  * @group Multicopter Attitude Control
  */
 PARAM_DEFINE_FLOAT(MC_TPA_RATE_D, 0.0f);
+
+
+
+
+// James' control limit settings
+/**
+ * Pitch out
+ *
+ * @min -1.0
+ * @max 1.0
+ * @decimal 2
+ * @increment 0.05
+ * @group Multicopter Attitude Control
+ */
+PARAM_DEFINE_FLOAT(MC_PITCH_OVR, 0.0f);
+
+/**
+ * Roll out
+ *
+ * @min -1.0
+ * @max 1.0
+ * @decimal 2
+ * @increment 0.05
+ * @group Multicopter Attitude Control
+ */
+PARAM_DEFINE_FLOAT(MC_ROLL_OVR, 0.0f);
+
+/**
+ * Collective out
+ *
+ * @min -1.0
+ * @max 1.0
+ * @decimal 2
+ * @increment 0.05
+ * @group Multicopter Attitude Control
+ */
+PARAM_DEFINE_FLOAT(MC_COLL_OVR, 0.0f);
+
+/**
+ * Yaw out
+ *
+ * @min -1.0
+ * @max 1.0
+ * @decimal 2
+ * @increment 0.05
+ * @group Multicopter Attitude Control
+ */
+PARAM_DEFINE_FLOAT(MC_YAW_OVR, 0.0f);

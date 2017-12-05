@@ -251,6 +251,12 @@ private:
 
 		param_t board_offset[3];
 
+		// B-1000 parameters
+		param_t pitch_ovr;
+		param_t roll_ovr;
+		param_t coll_ovr;
+		param_t yaw_ovr;
+
 	}		_params_handles;		/**< handles for interesting parameters */
 
 	struct {
@@ -286,6 +292,11 @@ private:
 		int board_rotation;
 
 		float board_offset[3];
+
+		float pitch_ovr;
+		float roll_ovr;
+		float coll_ovr;
+		float yaw_ovr;
 
 	}		_params;
 
@@ -467,6 +478,12 @@ MulticopterAttitudeControl::MulticopterAttitudeControl() :
 	_params.board_offset[1] = 0.0f;
 	_params.board_offset[2] = 0.0f;
 
+	/* B-1000 add ons */
+	_params.pitch_ovr = 0.0f;
+	_params.roll_ovr = 0.0f;
+	_params.coll_ovr = 0.0f;
+	_params.yaw_ovr = 0.0f;
+
 	_rates_prev.zero();
 	_rates_sp.zero();
 	_rates_sp_prev.zero();
@@ -525,6 +542,12 @@ MulticopterAttitudeControl::MulticopterAttitudeControl() :
 	_params_handles.board_offset[1] = param_find("SENS_BOARD_Y_OFF");
 	_params_handles.board_offset[2] = param_find("SENS_BOARD_Z_OFF");
 
+
+	/* B-1000 add ons */
+	_params_handles.pitch_ovr = param_find("MC_PITCH_OVR");
+	_params_handles.roll_ovr = param_find("MC_ROLL_OVR");
+	_params_handles.coll_ovr = param_find("MC_COLL_OVR");
+	_params_handles.yaw_ovr = param_find("MC_YAW_OVR");
 
 
 	/* fetch initial parameter values */
@@ -680,6 +703,13 @@ MulticopterAttitudeControl::parameters_update()
 	param_get(_params_handles.board_offset[0], &(_params.board_offset[0]));
 	param_get(_params_handles.board_offset[1], &(_params.board_offset[1]));
 	param_get(_params_handles.board_offset[2], &(_params.board_offset[2]));
+
+
+	// B-1000 add-ons
+	param_get(_params_handles.pitch_ovr, &_params.pitch_ovr);
+	param_get(_params_handles.roll_ovr, &_params.roll_ovr);
+	param_get(_params_handles.coll_ovr, &_params.coll_ovr);
+	param_get(_params_handles.yaw_ovr, &_params.yaw_ovr);
 
 	return OK;
 }
@@ -1296,6 +1326,18 @@ MulticopterAttitudeControl::task_main()
 				// B-1000 addition, add the throttle to actuators. This is now [0:1]. Remember for the mixer.
 				// Limits etc. are handled up stream by the motor_controller module.
 				_actuators.control[4] = _motor_throttle.throttle;
+
+				// B1000 hacking. We want to be able to set the actuators to their limits to set control inputs.
+				// We use the override parameters. We're also going to hack this and have to comment/uncomment this
+				// to use it...
+//				if (1)
+//				{
+//					_actuators.control[0] = _params.roll_ovr;
+//					_actuators.control[1] = _params.pitch_ovr;
+//					_actuators.control[2] = _params.yaw_ovr;
+//					_actuators.control[3] = _params.coll_ovr;
+//				}
+
 
 
 				if (!_actuators_0_circuit_breaker_enabled) {
