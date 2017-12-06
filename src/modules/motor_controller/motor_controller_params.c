@@ -136,3 +136,18 @@ PARAM_DEFINE_FLOAT(MOTOR_C_SRPM, 500.0f);
  */
 PARAM_DEFINE_FLOAT(MOTOR_C_RATE, 50.0f);	//RPM/s
 
+
+/**
+ * Motor controller bypass
+ *
+ * @unit norm
+ * @min 0
+ * @max 1
+ * @decimal 0
+ * @increment 1
+ * @group Default
+ */
+PARAM_DEFINE_INT32(MOTOR_C_BYPASS, 0);
+
+
+

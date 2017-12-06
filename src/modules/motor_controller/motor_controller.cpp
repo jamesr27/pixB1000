@@ -63,6 +63,7 @@ namespace motor_controller {
  	_params_handles.motor_control_startRate	= 	param_find("MOTOR_C_SRATE");
  	_params_handles.motor_control_startRpm	= 	param_find("MOTOR_C_SRPM");
  	_params_handles.motor_control_rate		= 	param_find("MOTOR_C_RATE");
+ 	_params_handles.motor_control_bypass 	=	param_find("MOTOR_C_BYPASS");
 
  	parameters_update();
  }
@@ -116,6 +117,7 @@ MotorController::~MotorController()
 		param_get(_params_handles.motor_control_startRpm, &_params.motor_control_startRpm);
 
 		param_get(_params_handles.motor_control_rate, &_params.motor_control_rate);
+		param_get(_params_handles.motor_control_bypass, &_params.motor_control_bypass);
 
 		_param_counter = 0;
 	 }
@@ -200,83 +202,94 @@ MotorController::run_controller(float dt)
 	 if (_actuator_armed.armed)
 	 {
 
-		 // Case 0: Kill switch on, do nothing. This is handled in the if statement above us though...
-		 if (_motor_kill.kill_switch == true)
-		{
+		 // We've added some code to bypass the controller if desired.
+		 if (_params.motor_control_bypass == 0)
+		 {
+			 // Case 0: Kill switch on, do nothing. This is handled in the if statement above us though...
+			 if (_motor_kill.kill_switch == true)
+			{
+					// Don't do anything, and keep integrators at zero to stop any winding up or down.
+					 _motor_throttle.throttle = 0.0f;
+					 _previous_error = 0.0f;
+					 _integral_sum = 0.0f;
+					 _filtered_rpm_command = 0.0f;
+					 //printf("in armed bit1\n");
+			}
+
+			 // Case 1: Kill switch is off, and we are in throttle low position.
+			 if (_switch_state == 0 && _motor_kill.kill_switch == false)
+			{
 				// Don't do anything, and keep integrators at zero to stop any winding up or down.
 				 _motor_throttle.throttle = 0.0f;
 				 _previous_error = 0.0f;
 				 _integral_sum = 0.0f;
 				 _filtered_rpm_command = 0.0f;
+				 _motor_started = false;
 				 //printf("in armed bit1\n");
-		}
+			}
 
-		 // Case 1: Kill switch is off, and we are in throttle low position.
-		 if (_switch_state == 0 && _motor_kill.kill_switch == false)
-		{
-			// Don't do anything, and keep integrators at zero to stop any winding up or down.
-			 _motor_throttle.throttle = 0.0f;
-			 _previous_error = 0.0f;
-			 _integral_sum = 0.0f;
-			 _filtered_rpm_command = 0.0f;
-			 _motor_started = false;
-			 //printf("in armed bit1\n");
-		}
-
-		 // Case 2: If we are not started, run the start sequence.
-		 else if ((_switch_state == 1 || _switch_state == 2) && _motor_kill.kill_switch == false && _motor_started == false)
-		 {
-			 // We put a start up sequence in here, to get the rotor spinning. For now it is increasing throttle at some
-			 // rate. We'll use a parameter to set this.
-			 // Once this has finished we switch over to governing with the pid in idle mode.
-			 _motor_throttle.throttle = _motor_throttle.throttle + _params.motor_control_startRate * dt / 1000.0f;
-
-			 // Do saturation limits
-			 if (_motor_throttle.throttle > _params.motor_control_upSat)
+			 // Case 2: If we are not started, run the start sequence.
+			 else if ((_switch_state == 1 || _switch_state == 2) && _motor_kill.kill_switch == false && _motor_started == false)
 			 {
-				 _motor_throttle.throttle = _params.motor_control_upSat;
+				 // We put a start up sequence in here, to get the rotor spinning. For now it is increasing throttle at some
+				 // rate. We'll use a parameter to set this.
+				 // Once this has finished we switch over to governing with the pid in idle mode.
+				 _motor_throttle.throttle = _motor_throttle.throttle + _params.motor_control_startRate * dt / 1000.0f;
+
+				 // Do saturation limits
+				 if (_motor_throttle.throttle > _params.motor_control_upSat)
+				 {
+					 _motor_throttle.throttle = _params.motor_control_upSat;
+				 }
+				 if (_motor_throttle.throttle < _params.motor_control_lowSat)
+				 {
+					 _motor_throttle.throttle = _params.motor_control_lowSat;
+				 }
+
+
+				 // Set the filtered_rpm_command to the current rpm? Will probably help with command jumps when we enable controller.
+				 _filtered_rpm_command = _rotor_rpm.rpm;
+				 // Run controller in sympathy (we don't assign its output though). We are just using the rpm measured as the setpoint and measured value.
+				 pid(dt, _filtered_rpm_command, _params.motor_control_ilim, _params.motor_control_upSat, _params.motor_control_lowSat);
+				 //printf("in armed bit2\n");
+				 _throttle_offset = _motor_throttle.throttle;
+
+				 // Final thing to do is to set started if we are above critical rpm
+				 if (_rotor_rpm.rpm > _params.motor_control_startRpm)
+				 {
+					 _motor_started = true;
+				 }
 			 }
-			 if (_motor_throttle.throttle < _params.motor_control_lowSat)
+
+			 // Case 3: We run the governor if started.
+			 else if (((_switch_state == 1 || _switch_state == 2)) && _motor_kill.kill_switch == false && _motor_started) // Run the controller in full with appropraite set point.
 			 {
-				 _motor_throttle.throttle = _params.motor_control_lowSat;
-			 }
 
+				 // Calculate the filtered rpm command. This is a rate transition from current rpm to target rpm at some rate.
+				 if (_switch_state == 1)
+				 {
+					 // Rate transition command to idle rpm.
+					 rate_transition(_filtered_rpm_command, _params.motor_control_idleRpm,dt);
+				 }
+				 if (_switch_state == 2)
+				 {
+					 // Rate transition command to flight rpm.
+					 rate_transition(_filtered_rpm_command, _params.motor_control_nomRpm,dt);
+				 }
 
-			 // Set the filtered_rpm_command to the current rpm? Will probably help with command jumps when we enable controller.
-			 _filtered_rpm_command = _rotor_rpm.rpm;
-			 // Run controller in sympathy (we don't assign its output though). We are just using the rpm measured as the setpoint and measured value.
-			 pid(dt, _filtered_rpm_command, _params.motor_control_ilim, _params.motor_control_upSat, _params.motor_control_lowSat);
-			 //printf("in armed bit2\n");
-			 _throttle_offset = _motor_throttle.throttle;
+				 // Run controller.
+				 _motor_throttle.throttle = pid(dt, _filtered_rpm_command, _params.motor_control_ilim, _params.motor_control_upSat, _params.motor_control_lowSat);
+				 //printf("in armed bit3\n");
 
-			 // Final thing to do is to set started if we are above critical rpm
-			 if (_rotor_rpm.rpm > _params.motor_control_startRpm)
-			 {
-				 _motor_started = true;
 			 }
 		 }
-
-		 // Case 3: We run the governor if started.
-		 else if (((_switch_state == 1 || _switch_state == 2)) && _motor_kill.kill_switch == false && _motor_started) // Run the controller in full with appropraite set point.
+		 // Now if we are bypassed
+		 else if (_params.motor_control_bypass == 1)
 		 {
-
-			 // Calculate the filtered rpm command. This is a rate transition from current rpm to target rpm at some rate.
-			 if (_switch_state == 1)
-			 {
-				 // Rate transition command to idle rpm.
-				 rate_transition(_filtered_rpm_command, _params.motor_control_idleRpm,dt);
-			 }
-			 if (_switch_state == 2)
-			 {
-				 // Rate transition command to flight rpm.
-				 rate_transition(_filtered_rpm_command, _params.motor_control_nomRpm,dt);
-			 }
-
-			 // Run controller.
-			 _motor_throttle.throttle = pid(dt, _filtered_rpm_command, _params.motor_control_ilim, _params.motor_control_upSat, _params.motor_control_lowSat);
-			 //printf("in armed bit3\n");
-
+			 _motor_throttle.throttle = _rc_channels.channels[8]/2.0f + 0.5f;
 		 }
+
+
 		// printf("MC: T: %0.3f SP: %0.3f RR: %0.3f\n",(double)_motor_throttle.throttle,(double)_filtered_rpm_command,(double)_rotor_rpm.rpm);
 	 }
 	 else if (!_actuator_armed.armed || _motor_kill.kill_switch == true)
