@@ -64,6 +64,8 @@ namespace motor_controller {
  	_params_handles.motor_control_startRpm	= 	param_find("MOTOR_C_SRPM");
  	_params_handles.motor_control_rate		= 	param_find("MOTOR_C_RATE");
  	_params_handles.motor_control_bypass 	=	param_find("MOTOR_C_BYPASS");
+ 	_params_handles.motor_control_iff		=	param_find("MOTOR_C_IFF");
+ 	_params_handles.motor_control_fff		= 	param_find("MOTOR_C_FFF");
 
  	parameters_update();
  }
@@ -119,6 +121,9 @@ MotorController::~MotorController()
 		param_get(_params_handles.motor_control_rate, &_params.motor_control_rate);
 		param_get(_params_handles.motor_control_bypass, &_params.motor_control_bypass);
 
+		param_get(_params_handles.motor_control_iff, &_params.motor_control_iff);
+		param_get(_params_handles.motor_control_fff, &_params.motor_control_fff);
+
 		_param_counter = 0;
 	 }
 	_param_counter++;
@@ -165,6 +170,14 @@ MotorController::run_controller(float dt)
 	 // 2. When we arm we must reset the integrators to zero.
 	 // 3. We need to perform a "soft" start up of the rotor so as to enable the clutch. In order to do this we need
 	 //		to track some switches and states.
+	 //
+	 //	Some additions that have happened along the way:
+	 //	1. I've added a motor_c_bypass parameter. When set to 1, a straight feed through is done on the throttle rc channel (use a slider)
+	 //	    Set it to 0 to use the controller as normal.
+	 // 2. I needed to schedule the feedforward (_throttle_offset) with flight condition. We used to set this to the value when we switched into control mode. I now prescribe on for idel and one for flight. We rate transition between them.
+	 //		For flight we need to boot this value up a bit, to somewhere around 0.5~0.6. Idle is about 0.2. This is in the PID function. I think.
+	 //
+	 //
 
 	 // Firstly some admin...
 	 // 1: Get switch state.
@@ -213,6 +226,7 @@ MotorController::run_controller(float dt)
 					 _previous_error = 0.0f;
 					 _integral_sum = 0.0f;
 					 _filtered_rpm_command = 0.0f;
+					 _throttle_offset = 0.0f;
 					 //printf("in armed bit1\n");
 			}
 
@@ -225,6 +239,7 @@ MotorController::run_controller(float dt)
 				 _integral_sum = 0.0f;
 				 _filtered_rpm_command = 0.0f;
 				 _motor_started = false;
+				 _throttle_offset = 0.0f;
 				 //printf("in armed bit1\n");
 			}
 
@@ -252,11 +267,11 @@ MotorController::run_controller(float dt)
 				 // Run controller in sympathy (we don't assign its output though). We are just using the rpm measured as the setpoint and measured value.
 				 pid(dt, _filtered_rpm_command, _params.motor_control_ilim, _params.motor_control_upSat, _params.motor_control_lowSat);
 				 //printf("in armed bit2\n");
-				 _throttle_offset = _motor_throttle.throttle;
 
-				 // Final thing to do is to set started if we are above critical rpm
+				 // Final thing to do is to set started if we are above critical rpm, and set the throttle offset to the idle feed forward.
 				 if (_rotor_rpm.rpm > _params.motor_control_startRpm)
 				 {
+					 _throttle_offset = _params.motor_control_iff;
 					 _motor_started = true;
 				 }
 			 }
@@ -266,15 +281,20 @@ MotorController::run_controller(float dt)
 			 {
 
 				 // Calculate the filtered rpm command. This is a rate transition from current rpm to target rpm at some rate.
+				 // We're also going to rate transition the feed forwards about.
 				 if (_switch_state == 1)
 				 {
 					 // Rate transition command to idle rpm.
 					 rate_transition(_filtered_rpm_command, _params.motor_control_idleRpm,dt);
+					 // Rate transition the _throttle_offset
+					 rate_transition(_throttle_offset, _params.motor_control_iff, dt/500); // This may be correct.
 				 }
 				 if (_switch_state == 2)
 				 {
 					 // Rate transition command to flight rpm.
 					 rate_transition(_filtered_rpm_command, _params.motor_control_nomRpm,dt);
+					 // Rate transition the feed forward.
+					 rate_transition(_throttle_offset, _params.motor_control_fff, dt/500); // This may be correct.
 				 }
 
 				 // Run controller.
@@ -300,6 +320,7 @@ MotorController::run_controller(float dt)
 		 _integral_sum = 0.0f;
 		 _filtered_rpm_command = 0.0f;
 		 _motor_started = false;
+		 _throttle_offset = 0.0f;
 		 //printf("in not armed bit\n");
 	 }
 

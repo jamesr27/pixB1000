@@ -141,6 +141,8 @@
 			param_t motor_control_startRpm;
 			param_t motor_control_rate;
 			param_t motor_control_bypass;
+			param_t motor_control_iff;
+			param_t motor_control_fff;
 
 		} _params_handles;
 
@@ -158,6 +160,8 @@
 			float motor_control_startRpm;
 			float motor_control_rate;
 			int32_t motor_control_bypass;
+			float motor_control_iff;
+			float motor_control_fff;
 
 		} _params;
 

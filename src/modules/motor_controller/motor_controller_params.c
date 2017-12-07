@@ -150,4 +150,26 @@ PARAM_DEFINE_FLOAT(MOTOR_C_RATE, 50.0f);	//RPM/s
 PARAM_DEFINE_INT32(MOTOR_C_BYPASS, 0);
 
 
+/**
+ * Motor controller idle feed-forward
+ *
+ * @unit norm
+ * @min 0
+ * @max 1
+ * @decimal 2
+ * @increment 0.01
+ * @group Default
+ */
+PARAM_DEFINE_FLOAT(MOTOR_C_IFF, 0.2f);	// Actuator output
 
+/**
+ * Motor controller flight feed-forward
+ *
+ * @unit norm
+ * @min 0
+ * @max 1
+ * @decimal 2
+ * @increment 0.01
+ * @group Default
+ */
+PARAM_DEFINE_FLOAT(MOTOR_C_FFF, 0.6f);	// Actuator output
