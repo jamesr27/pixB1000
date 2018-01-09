@@ -77,6 +77,7 @@ RotorRpmReader::~RotorRpmReader()
 	// House keeping
 	bool success;               // receive success flag
 	mavlink_rotorrpm_t _rotor_rpm_m;
+	uint64_t receivedTime = 0;
 
  	while (!_task_should_exit) {
 
@@ -93,6 +94,7 @@ RotorRpmReader::~RotorRpmReader()
  			case MAVLINK_MSG_ID_ROTORRPM:
  			//	printf("Identified rotor rpm message.\n");
 				mavlink_msg_rotorrpm_decode(&message, &(_rotor_rpm_m));
+				receivedTime = hrt_absolute_time();
  				break;
 
  			default:
@@ -102,6 +104,7 @@ RotorRpmReader::~RotorRpmReader()
 
 			// Assign
  			_rotor_rpm.rpm = _rotor_rpm_m.rpm;
+ 			_rotor_rpm.updateTime = receivedTime;
 
 			// Publish
 			if (_rotor_rpm_pub != nullptr) orb_publish(ORB_ID(rotor_rpm), _rotor_rpm_pub, &_rotor_rpm);

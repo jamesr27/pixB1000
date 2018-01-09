@@ -4,6 +4,11 @@ This does a few things:
 	2. Receives the throttle command. This comes from the rc at present (channel 9, [8] in zero counting).
 	3. Receives the rpm from the rpm sensor (through uORB). (Must add the filing of the rotor rpm mavlink message to mavlink still).
 	4. Calculates the throttle output command (PID controller on throttle, or PD, or whatever works best). Published to uORB. We will assign the actuator value in the attitude controller or wherever this is done these days.)
+
+
+	9/1/2018
+	James wants to add a failsafe for the rpm sensor. First problem to solve is a data timeout, we will then hold throttle at 0.65. This should let us land/
+	The second problem is erroneous readings. I don't know how to deal with that at the moment, and corrective measures for this are not implemented. The hall effect sensor should be quite reliable.
 */
 
 #include "motor_controller.h"
@@ -176,7 +181,7 @@ MotorController::run_controller(float dt)
 	 //	    Set it to 0 to use the controller as normal.
 	 // 2. I needed to schedule the feedforward (_throttle_offset) with flight condition. We used to set this to the value when we switched into control mode. I now prescribe on for idel and one for flight. We rate transition between them.
 	 //		For flight we need to boot this value up a bit, to somewhere around 0.5~0.6. Idle is about 0.2. This is in the PID function. I think.
-	 //
+	 // 3. WE want a failsafe on timeout of the rpm reading. IF it is >3 seconds old, we set throttle to 0.65...? This seems reasonable behaviour for now.
 	 //
 
 	 // Firstly some admin...
@@ -299,7 +304,15 @@ MotorController::run_controller(float dt)
 
 				 // Run controller.
 				 _motor_throttle.throttle = pid(dt, _filtered_rpm_command, _params.motor_control_ilim, _params.motor_control_upSat, _params.motor_control_lowSat);
-				 //printf("in armed bit3\n");
+
+				 // Do a rpm sensor timeout failsafe. Only if in flight mode
+				 if (_switch_state == 2)
+				 {
+					if((hrt_absolute_time() - _rotor_rpm.updateTime) > 3000000.0f)
+					{
+						_motor_throttle.throttle = 0.65;
+					}
+				 }
 
 			 }
 		 }
