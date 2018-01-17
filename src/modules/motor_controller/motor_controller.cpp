@@ -9,6 +9,10 @@ This does a few things:
 	9/1/2018
 	James wants to add a failsafe for the rpm sensor. First problem to solve is a data timeout, we will then hold throttle at 0.65. This should let us land/
 	The second problem is erroneous readings. I don't know how to deal with that at the moment, and corrective measures for this are not implemented. The hall effect sensor should be quite reliable.
+
+
+	17/1/2018
+	I remove the kill switch. We thought it was causing issues, and we don't want someone to pull the wrong switch and crash the helicopter.
 */
 
 #include "motor_controller.h"
@@ -202,18 +206,24 @@ MotorController::run_controller(float dt)
 	 //printf("Switch state: %d\n",_switch_state);
 
 	 // 2: Set the state of the kill switch
+	 // Changed: removed kill switch. If armed it is false, if not, it is true.
 	 if (!_actuator_armed.armed)
 	 {
 		 _motor_kill.kill_switch = true;
 	 }
-	 else if (_actuator_armed.armed && _rc_channels.channels[9] < 0)
-	 {
-		 _motor_kill.kill_switch = true;
-	 }
-	 else if (_actuator_armed.armed && _rc_channels.channels[9] >= 0)
+//	 else if (_actuator_armed.armed && _rc_channels.channels[9] < 0)
+//	 {
+//		 _motor_kill.kill_switch = true;
+//	 }
+//	 else if (_actuator_armed.armed && _rc_channels.channels[9] >= 0)
+//	 {
+//		 _motor_kill.kill_switch = false;
+//	 }
+	 else if (_actuator_armed.armed)
 	 {
 		 _motor_kill.kill_switch = false;
 	 }
+
 
 
 
@@ -249,7 +259,8 @@ MotorController::run_controller(float dt)
 			}
 
 			 // Case 2: If we are not started, run the start sequence.
-			 else if ((_switch_state == 1 || _switch_state == 2) && _motor_kill.kill_switch == false && _motor_started == false)
+//			 else if ((_switch_state == 1 || _switch_state == 2) && _motor_kill.kill_switch == false && _motor_started == false)
+			 else if ((_switch_state == 1 || _switch_state == 2) && _motor_started == false)
 			 {
 				 // We put a start up sequence in here, to get the rotor spinning. For now it is increasing throttle at some
 				 // rate. We'll use a parameter to set this.
@@ -282,7 +293,8 @@ MotorController::run_controller(float dt)
 			 }
 
 			 // Case 3: We run the governor if started.
-			 else if (((_switch_state == 1 || _switch_state == 2)) && _motor_kill.kill_switch == false && _motor_started) // Run the controller in full with appropraite set point.
+			 //else if (((_switch_state == 1 || _switch_state == 2)) && _motor_kill.kill_switch == false && _motor_started) // Run the controller in full with appropraite set point.
+			 else if (((_switch_state == 1 || _switch_state == 2))  && _motor_started) // Run the controller in full with appropraite set point.
 			 {
 
 				 // Calculate the filtered rpm command. This is a rate transition from current rpm to target rpm at some rate.
