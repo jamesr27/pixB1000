@@ -50,7 +50,9 @@ namespace motor_controller {
  _previous_error(0),
  _switch_state(0),
  _filtered_rpm_command(0.0f),
- _throttle_offset(0.0f)
+ _throttle_offset(0.0f),
+ _previous_rpm(0.0f),
+ _current_rpm(0.0f)
 
 
  {
@@ -354,7 +356,17 @@ MotorController::run_controller(float dt)
  float
  MotorController::pid(float dt, float sp, float integratorLimit, float upSat, float lowSat)
  {
-	 float error = sp - _rotor_rpm.rpm;						// The error
+	 // We're going to put a fail safe in here to avoid erroneous rpm readings.
+	 // We got the odd 100000 come through, and the controller blips the throttle down to compensate.
+	 _current_rpm = _rotor_rpm.rpm;
+	 if (_current_rpm > 1500.0f)
+	 {
+		 _current_rpm = _previous_rpm;
+	 }
+
+	 // Now the control bit.
+
+	 float error = sp - _current_rpm;						// The error
 	 _integral_sum = _integral_sum + error * dt;			// Integral sum
 	 float derivative_error = (error - _previous_error);	// Derivative error
 
@@ -382,6 +394,7 @@ MotorController::run_controller(float dt)
 
 	 // Return final output and clean up
 	 _previous_error = error;
+	 _previous_rpm = _current_rpm;
 	 return output;
  }
 

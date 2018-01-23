@@ -118,6 +118,9 @@
 		float 					_throttle_offset;	// [0:1] offset is recorded once we have started.
 		bool 					_motor_started;		// False if we haven't started.
 
+		float					_previous_rpm;
+		float					_current_rpm;
+
 
 		rotor_rpm_s 			_rotor_rpm;
 		motor_throttle_s		_motor_throttle;
