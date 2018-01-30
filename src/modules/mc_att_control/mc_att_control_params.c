@@ -564,3 +564,16 @@ PARAM_DEFINE_FLOAT(MC_COLL_OVR, 0.0f);
  * @group Multicopter Attitude Control
  */
 PARAM_DEFINE_FLOAT(MC_YAW_OVR, 0.0f);
+
+
+// James adds roll correction angle
+/**
+ * Roll angle offset
+ *
+ * @min -10.0
+ * @max 10.0
+ * @decimal 2
+ * @increment 0.1
+ * @group Multicopter Attitude Control
+ */
+PARAM_DEFINE_FLOAT(MC_ROLL_OFFSET, 0.0f);

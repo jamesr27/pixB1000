@@ -256,6 +256,7 @@ private:
 		param_t roll_ovr;
 		param_t coll_ovr;
 		param_t yaw_ovr;
+		param_t roll_off;
 
 	}		_params_handles;		/**< handles for interesting parameters */
 
@@ -297,6 +298,7 @@ private:
 		float roll_ovr;
 		float coll_ovr;
 		float yaw_ovr;
+		float roll_off;
 
 	}		_params;
 
@@ -483,6 +485,7 @@ MulticopterAttitudeControl::MulticopterAttitudeControl() :
 	_params.roll_ovr = 0.0f;
 	_params.coll_ovr = 0.0f;
 	_params.yaw_ovr = 0.0f;
+	_params.roll_off = 0.0f;
 
 	_rates_prev.zero();
 	_rates_sp.zero();
@@ -548,6 +551,7 @@ MulticopterAttitudeControl::MulticopterAttitudeControl() :
 	_params_handles.roll_ovr = param_find("MC_ROLL_OVR");
 	_params_handles.coll_ovr = param_find("MC_COLL_OVR");
 	_params_handles.yaw_ovr = param_find("MC_YAW_OVR");
+	_params_handles.roll_off = param_find("MC_ROLL_OFFSET");
 
 
 	/* fetch initial parameter values */
@@ -710,6 +714,8 @@ MulticopterAttitudeControl::parameters_update()
 	param_get(_params_handles.roll_ovr, &_params.roll_ovr);
 	param_get(_params_handles.coll_ovr, &_params.coll_ovr);
 	param_get(_params_handles.yaw_ovr, &_params.yaw_ovr);
+	param_get(_params_handles.roll_off, &v);
+	_params.roll_off = math::radians(v) ;	// Convert to radians
 
 	return OK;
 }
@@ -893,9 +899,22 @@ MulticopterAttitudeControl::control_attitude(float dt)
 
 	_thrust_sp = _v_att_sp.thrust;
 
+
+
 	/* construct attitude setpoint rotation matrix */
 	math::Quaternion q_sp(_v_att_sp.q_d[0], _v_att_sp.q_d[1], _v_att_sp.q_d[2], _v_att_sp.q_d[3]);
+
+
+	// James hack. Try adding the roll offset to the quaternion we have just received....
+	// This works, but we need to do it further upstream, affect the attitude setpoint directly.
+	// We're going to get over it and do it here anyway.
+	math::Quaternion junk;
+	junk.from_euler(_params.roll_off,0.0f,0.0f);
+	q_sp = junk * q_sp;
+
 	math::Matrix<3, 3> R_sp = q_sp.to_dcm();
+
+
 
 	/* get current rotation matrix from control state quaternions */
 	math::Quaternion q_att(_ctrl_state.q[0], _ctrl_state.q[1], _ctrl_state.q[2], _ctrl_state.q[3]);
