@@ -42,6 +42,7 @@
 #include <uORB/topics/actuator_armed.h>
 #include <uORB/topics/motor_kill.h>
 #include <uORB/topics/motor_controller_log.h>
+#include <uORB/topics/actuator_controls.h>
 
 
  extern "C" __EXPORT int motor_controller_main(int argc, char *argv[]);
@@ -103,6 +104,7 @@
 		int						_actuator_armed_sub;
 		int						_rc_channels_sub;
 		int						_vehicle_attitude_sub;
+		int						_actuator_controls_sub;
 		orb_advert_t 			_motor_throttle_pub;
 		orb_advert_t			_motor_kill_pub;
 		orb_advert_t			_motor_controller_log_pub;
@@ -121,6 +123,8 @@
 		float					_previous_rpm;
 		float					_current_rpm;
 
+		float					_ff_gradient;
+
 
 		rotor_rpm_s 			_rotor_rpm;
 		motor_throttle_s		_motor_throttle;
@@ -128,6 +132,7 @@
 		rc_channels_s			_rc_channels;
 		motor_kill_s			_motor_kill;
 		motor_controller_log_s	_motor_controller_log;
+		actuator_controls_s		_actuator_controls;
 
 
 		struct {

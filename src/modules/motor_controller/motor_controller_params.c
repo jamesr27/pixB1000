@@ -151,7 +151,7 @@ PARAM_DEFINE_INT32(MOTOR_C_BYPASS, 0);
 
 
 /**
- * Motor controller idle feed-forward
+ * Motor controller idle feed-forward. FF at 0 collective.
  *
  * @unit norm
  * @min 0
@@ -160,10 +160,10 @@ PARAM_DEFINE_INT32(MOTOR_C_BYPASS, 0);
  * @increment 0.01
  * @group Default
  */
-PARAM_DEFINE_FLOAT(MOTOR_C_IFF, 0.2f);	// Actuator output
+PARAM_DEFINE_FLOAT(MOTOR_C_IFF, 0.15f);	// Actuator output
 
 /**
- * Motor controller flight feed-forward
+ * Motor controller flight feed-forward @ 0.5 collective. Use idle feedforward and this in linear fashion to schedule feed forward.
  *
  * @unit norm
  * @min 0
@@ -172,4 +172,4 @@ PARAM_DEFINE_FLOAT(MOTOR_C_IFF, 0.2f);	// Actuator output
  * @increment 0.01
  * @group Default
  */
-PARAM_DEFINE_FLOAT(MOTOR_C_FFF, 0.6f);	// Actuator output
+PARAM_DEFINE_FLOAT(MOTOR_C_FFF, 0.5f);	// Actuator output

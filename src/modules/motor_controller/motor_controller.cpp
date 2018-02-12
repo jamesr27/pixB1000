@@ -13,6 +13,12 @@ This does a few things:
 
 	17/1/2018
 	I remove the kill switch. We thought it was causing issues, and we don't want someone to pull the wrong switch and crash the helicopter.
+
+	12/2/2018
+	Changed the way feedforward works, due to new engine.
+	Idle feed forward is the ff at 0 collective.
+	flight feed-forward (fff) is the feedforward at 0.5 collective.
+	We draw a linear curve between and past these values.
 */
 
 #include "motor_controller.h"
@@ -39,6 +45,7 @@ namespace motor_controller {
  _actuator_armed_sub(-1),
  _rc_channels_sub(-1),
  _vehicle_attitude_sub(-1),
+ _actuator_controls_sub(-1),
 
 	/* publications */
  _motor_throttle_pub(nullptr),
@@ -52,7 +59,8 @@ namespace motor_controller {
  _filtered_rpm_command(0.0f),
  _throttle_offset(0.0f),
  _previous_rpm(0.0f),
- _current_rpm(0.0f)
+ _current_rpm(0.0f),
+ _ff_gradient(0.0f)
 
 
  {
@@ -62,6 +70,7 @@ namespace motor_controller {
 	memset(&_rc_channels, 0, sizeof(_rc_channels));
 	memset(&_motor_kill, 0, sizeof(_motor_kill));
 	memset(&_motor_controller_log, 0, sizeof(_motor_controller_log));
+	memset(&_actuator_controls, 0, sizeof(_actuator_controls));
 
  	_params_handles.motor_control_p			= 	param_find("MOTOR_C_P");
  	_params_handles.motor_control_i			= 	param_find("MOTOR_C_I");
@@ -109,7 +118,7 @@ MotorController::~MotorController()
  }
 
 
-//Parameter forced updates if system isn't listening
+//Parameter forced updates if system isn't listeningvehicle_attitude
  int
  MotorController::parameters_update()
  {
@@ -134,6 +143,8 @@ MotorController::~MotorController()
 
 		param_get(_params_handles.motor_control_iff, &_params.motor_control_iff);
 		param_get(_params_handles.motor_control_fff, &_params.motor_control_fff);
+
+		_ff_gradient = (0.5f - _params.motor_control_iff)/(_params.motor_control_fff);
 
 		_param_counter = 0;
 	 }
@@ -167,6 +178,12 @@ MotorController::poll_all() {
  	orb_check(_rc_channels_sub, &updated);
  	if(updated) {
  		orb_copy(ORB_ID(rc_channels), _rc_channels_sub, &_rc_channels);
+ 	}
+
+ 	// 4: get the actuator controls
+ 	orb_check(_actuator_controls_sub, &updated);
+ 	if(updated) {
+ 		orb_copy(ORB_ID(actuator_controls), _actuator_controls_sub, &_actuator_controls);
  	}
 
  }
@@ -284,7 +301,6 @@ MotorController::run_controller(float dt)
 				 _filtered_rpm_command = _rotor_rpm.rpm;
 				 // Run controller in sympathy (we don't assign its output though). We are just using the rpm measured as the setpoint and measured value.
 				 pid(dt, _filtered_rpm_command, _params.motor_control_ilim, _params.motor_control_upSat, _params.motor_control_lowSat);
-				 //printf("in armed bit2\n");
 
 				 // Final thing to do is to set started if we are above critical rpm, and set the throttle offset to the idle feed forward.
 				 if (_rotor_rpm.rpm > _params.motor_control_startRpm)
@@ -297,7 +313,7 @@ MotorController::run_controller(float dt)
 			 // Case 3: We run the governor if started.
 			 //else if (((_switch_state == 1 || _switch_state == 2)) && _motor_kill.kill_switch == false && _motor_started) // Run the controller in full with appropraite set point.
 			 else if (((_switch_state == 1 || _switch_state == 2))  && _motor_started) // Run the controller in full with appropraite set point.
-			 {
+			 {rc_channels
 
 				 // Calculate the filtered rpm command. This is a rate transition from current rpm to target rpm at some rate.
 				 // We're also going to rate transition the feed forwards about.
@@ -312,8 +328,14 @@ MotorController::run_controller(float dt)
 				 {
 					 // Rate transition command to flight rpm.
 					 rate_transition(_filtered_rpm_command, _params.motor_control_nomRpm,dt);
+
+					 // Old way
 					 // Rate transition the feed forward.
-					 rate_transition(_throttle_offset, _params.motor_control_fff, dt/500); // This may be correct.
+					 //rate_transition(_throttle_offset, _params.motor_control_fff, dt/500); // This may be correct.
+
+					 // New way, link to actuator collective value.
+					 _throttle_offset = _ff_gradient * _actuator_controls[3] + _params.motor_control_iff;
+
 				 }
 
 				 // Run controller.
@@ -384,7 +406,7 @@ MotorController::run_controller(float dt)
 	 float output = _throttle_offset + _params.motor_control_p / 1000.0f * error + _params.motor_control_i / 1000.0f * _integral_sum + _params.motor_control_d / 1000.0f * derivative_error;
 
 	 if (output > _params.motor_control_upSat)
-	 {
+	 {				 //printf("in armed bit2\n");
 		 output = _params.motor_control_upSat;
 	 }
 	 if (output < _params.motor_control_lowSat)
@@ -413,7 +435,7 @@ MotorController::rate_transition(float &input, float goal, float dt) {
 		if(goal - input >  0) { // Add to input
 
 			input += distance;
-		} else {
+		} else {2
 
 			input -= distance;
 		}
@@ -434,6 +456,7 @@ MotorController::task_main()
  	_actuator_armed_sub = orb_subscribe(ORB_ID(actuator_armed));
  	_rc_channels_sub = orb_subscribe(ORB_ID(rc_channels));
  	_vehicle_attitude_sub = orb_subscribe(ORB_ID(vehicle_attitude));
+ 	_actuator_controls_sub = orb_subscribe(ORB_ID(actuator_controls));
 
  	//printf("here2\n");
 	/* wakeup source */
