@@ -183,7 +183,7 @@ MotorController::poll_all() {
  	// 4: get the actuator controls
  	orb_check(_actuator_controls_sub, &updated);
  	if(updated) {
- 		orb_copy(ORB_ID(actuator_controls), _actuator_controls_sub, &_actuator_controls);
+ 		orb_copy(ORB_ID(actuator_controls_0), _actuator_controls_sub, &_actuator_controls);
  	}
 
  }
@@ -313,7 +313,7 @@ MotorController::run_controller(float dt)
 			 // Case 3: We run the governor if started.
 			 //else if (((_switch_state == 1 || _switch_state == 2)) && _motor_kill.kill_switch == false && _motor_started) // Run the controller in full with appropraite set point.
 			 else if (((_switch_state == 1 || _switch_state == 2))  && _motor_started) // Run the controller in full with appropraite set point.
-			 {rc_channels
+			 {
 
 				 // Calculate the filtered rpm command. This is a rate transition from current rpm to target rpm at some rate.
 				 // We're also going to rate transition the feed forwards about.
@@ -334,7 +334,7 @@ MotorController::run_controller(float dt)
 					 //rate_transition(_throttle_offset, _params.motor_control_fff, dt/500); // This may be correct.
 
 					 // New way, link to actuator collective value.
-					 _throttle_offset = _ff_gradient * _actuator_controls[3] + _params.motor_control_iff;
+					 _throttle_offset = _ff_gradient * _actuator_controls.control[3] + _params.motor_control_iff;
 
 				 }
 
@@ -435,8 +435,7 @@ MotorController::rate_transition(float &input, float goal, float dt) {
 		if(goal - input >  0) { // Add to input
 
 			input += distance;
-		} else {2
-
+		} else {
 			input -= distance;
 		}
 	}
@@ -456,7 +455,7 @@ MotorController::task_main()
  	_actuator_armed_sub = orb_subscribe(ORB_ID(actuator_armed));
  	_rc_channels_sub = orb_subscribe(ORB_ID(rc_channels));
  	_vehicle_attitude_sub = orb_subscribe(ORB_ID(vehicle_attitude));
- 	_actuator_controls_sub = orb_subscribe(ORB_ID(actuator_controls));
+ 	_actuator_controls_sub = orb_subscribe(ORB_ID(actuator_controls_0));
 
  	//printf("here2\n");
 	/* wakeup source */
