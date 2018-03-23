@@ -173,3 +173,15 @@ PARAM_DEFINE_FLOAT(MOTOR_C_IFF, 0.15f);	// Actuator output
  * @group Default
  */
 PARAM_DEFINE_FLOAT(MOTOR_C_FFF, 0.5f);	// Actuator output
+
+
+/**
+ * Motor controller idle. THis sets the idle setting og the output. We do it like this so we can go below idle output to kill the motor.
+ * @unit norm
+ * @min 0
+ * @max 1
+ * @decimal 2
+ * @increment 0.01
+ * @group Default
+ */
+PARAM_DEFINE_FLOAT(MOTOR_C_IDLE, 0.05f);	// Actuator output

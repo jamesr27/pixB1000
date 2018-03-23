@@ -60,7 +60,8 @@ namespace motor_controller {
  _throttle_offset(0.0f),
  _previous_rpm(0.0f),
  _current_rpm(0.0f),
- _ff_gradient(0.0f)
+ _ff_gradient(0.0f),
+ _idle_offset(0.0f)
 
 
  {
@@ -86,6 +87,7 @@ namespace motor_controller {
  	_params_handles.motor_control_bypass 	=	param_find("MOTOR_C_BYPASS");
  	_params_handles.motor_control_iff		=	param_find("MOTOR_C_IFF");
  	_params_handles.motor_control_fff		= 	param_find("MOTOR_C_FFF");
+ 	_params_handles.motor_control_idle		=	param_find("MOTOR_C_IDLE");
 
  	parameters_update();
  }
@@ -143,6 +145,8 @@ MotorController::~MotorController()
 
 		param_get(_params_handles.motor_control_iff, &_params.motor_control_iff);
 		param_get(_params_handles.motor_control_fff, &_params.motor_control_fff);
+
+		param_get(_params_handles.motor_control_idle, &_params.motor_control_idle);
 
 		_ff_gradient = (0.5f - _params.motor_control_iff)/(_params.motor_control_fff);
 
@@ -206,6 +210,7 @@ MotorController::run_controller(float dt)
 	 //		For flight we need to boot this value up a bit, to somewhere around 0.5~0.6. Idle is about 0.2. This is in the PID function. I think.
 	 // 3. WE want a failsafe on timeout of the rpm reading. IF it is >3 seconds old, we set throttle to 0.65...? This seems reasonable behaviour for now.
 	 //
+	 // 4. We've added kill switch functionality and a new parameter. We are tuning idle throttle with a parameter now.
 
 	 // Firstly some admin...
 	 // 1: Get switch state.
@@ -229,6 +234,7 @@ MotorController::run_controller(float dt)
 	 if (!_actuator_armed.armed)
 	 {
 		 _motor_kill.kill_switch = true;
+		 _idle_offset = 0.0f;
 	 }
 //	 else if (_actuator_armed.armed && _rc_channels.channels[9] < 0)
 //	 {
@@ -241,9 +247,13 @@ MotorController::run_controller(float dt)
 	 else if (_actuator_armed.armed)
 	 {
 		 _motor_kill.kill_switch = false;
+		 _idle_offset = _params.motor_control_idle;
 	 }
 
-
+	 if (_rc_channels.channels[9] > 0.0f && _rc_channels.channels[10] > 0.0f)
+	 {
+		_motor_kill.kill_switch = true;
+	 }
 
 
 	 if (_actuator_armed.armed)
@@ -268,7 +278,7 @@ MotorController::run_controller(float dt)
 			 if (_switch_state == 0 && _motor_kill.kill_switch == false)
 			{
 				// Don't do anything, and keep integrators at zero to stop any winding up or down.
-				 _motor_throttle.throttle = 0.0f;
+				 _motor_throttle.throttle = 0.0f + _idle_offset;
 				 _previous_error = 0.0f;
 				 _integral_sum = 0.0f;
 				 _filtered_rpm_command = 0.0f;
@@ -278,13 +288,15 @@ MotorController::run_controller(float dt)
 			}
 
 			 // Case 2: If we are not started, run the start sequence.
-//			 else if ((_switch_state == 1 || _switch_state == 2) && _motor_kill.kill_switch == false && _motor_started == false)
-			 else if ((_switch_state == 1 || _switch_state == 2) && _motor_started == false)
+			 else if ((_switch_state == 1 || _switch_state == 2) && _motor_kill.kill_switch == false && _motor_started == false)
 			 {
 				 // We put a start up sequence in here, to get the rotor spinning. For now it is increasing throttle at some
 				 // rate. We'll use a parameter to set this.
 				 // Once this has finished we switch over to governing with the pid in idle mode.
-				 _motor_throttle.throttle = _motor_throttle.throttle + _params.motor_control_startRate * dt / 1000.0f;
+
+
+			     _motor_throttle.throttle = _motor_throttle.throttle + _params.motor_control_startRate * dt / 1000.0f;
+
 
 				 // Do saturation limits
 				 if (_motor_throttle.throttle > _params.motor_control_upSat)
@@ -311,8 +323,7 @@ MotorController::run_controller(float dt)
 			 }
 
 			 // Case 3: We run the governor if started.
-			 //else if (((_switch_state == 1 || _switch_state == 2)) && _motor_kill.kill_switch == false && _motor_started) // Run the controller in full with appropraite set point.
-			 else if (((_switch_state == 1 || _switch_state == 2))  && _motor_started) // Run the controller in full with appropraite set point.
+			 else if (((_switch_state == 1 || _switch_state == 2)) && _motor_kill.kill_switch == false && _motor_started) // Run the controller in full with appropraite set point.
 			 {
 
 				 // Calculate the filtered rpm command. This is a rate transition from current rpm to target rpm at some rate.
@@ -338,16 +349,23 @@ MotorController::run_controller(float dt)
 
 				 }
 
-				 // Run controller.
-				 _motor_throttle.throttle = pid(dt, _filtered_rpm_command, _params.motor_control_ilim, _params.motor_control_upSat, _params.motor_control_lowSat);
+				 // Run controller
+				_motor_throttle.throttle = pid(dt, _filtered_rpm_command, _params.motor_control_ilim, _params.motor_control_upSat, _params.motor_control_lowSat) + _idle_offset;
+
+
 
 				 // Do a rpm sensor timeout failsafe. Only if in flight mode
 				 if (_switch_state == 2)
 				 {
-					if((hrt_absolute_time() - _rotor_rpm.updateTime) > 3000000.0f)
-					{
-						_motor_throttle.throttle = 0.65;
-					}
+					 if (_rc_channels.channels[8] > 0.0f && _rc_channels.channels[9] > 0.0f)
+					 {
+						 _idle_offset = 0.0f;
+						 _motor_throttle.throttle = 0.0f;
+					 }
+					 else if((hrt_absolute_time() - _rotor_rpm.updateTime) > 3000000.0f)
+					 {
+						_motor_throttle.throttle = 0.65f + _idle_offset;
+					 }
 				 }
 
 			 }
@@ -355,9 +373,16 @@ MotorController::run_controller(float dt)
 		 // Now if we are bypassed
 		 else if (_params.motor_control_bypass == 1)
 		 {
-			 _motor_throttle.throttle = _rc_channels.channels[8]/2.0f + 0.5f;
+			 if (_rc_channels.channels[9] > 0.0f && _rc_channels.channels[10] > 0.0f)
+			 {
+				 _idle_offset = 0.0f;
+				 _motor_throttle.throttle = 0.0f;
+			 }
+			 else
+			 {
+				_motor_throttle.throttle = _rc_channels.channels[8]/2.0f + 0.5f + _idle_offset;
+			 }
 		 }
-
 
 		// printf("MC: T: %0.3f SP: %0.3f RR: %0.3f\n",(double)_motor_throttle.throttle,(double)_filtered_rpm_command,(double)_rotor_rpm.rpm);
 	 }

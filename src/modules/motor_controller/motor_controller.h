@@ -125,6 +125,7 @@
 
 		float					_ff_gradient;
 
+		float					_idle_offset;
 
 		rotor_rpm_s 			_rotor_rpm;
 		motor_throttle_s		_motor_throttle;
@@ -151,6 +152,7 @@
 			param_t motor_control_bypass;
 			param_t motor_control_iff;
 			param_t motor_control_fff;
+			param_t motor_control_idle;
 
 		} _params_handles;
 
@@ -170,6 +172,7 @@
 			int32_t motor_control_bypass;
 			float motor_control_iff;
 			float motor_control_fff;
+			float motor_control_idle;
 
 		} _params;
 
