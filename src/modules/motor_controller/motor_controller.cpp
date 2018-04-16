@@ -214,15 +214,15 @@ MotorController::run_controller(float dt)
 
 	 // Firstly some admin...
 	 // 1: Get switch state.
-	 if (_rc_channels.channels[8] < -0.5f)
+	 if (_rc_channels.channels[5] < -0.5f)
 	 {
 		 _switch_state = 0;
 	 }
-	 else if (_rc_channels.channels[8] <= 0.3f && _rc_channels.channels[8] >= -0.5f)
+	 else if (_rc_channels.channels[5] <= 0.3f && _rc_channels.channels[5] >= -0.5f)
 	 {
 		 _switch_state = 1;
 	 }
-	 else if (_rc_channels.channels[8] > 0.3f)
+	 else if (_rc_channels.channels[5] > 0.3f)
 	 {
 		 _switch_state = 2;
 	 }
@@ -250,7 +250,7 @@ MotorController::run_controller(float dt)
 		 _idle_offset = _params.motor_control_idle;
 	 }
 
-	 if (_rc_channels.channels[9] > 0.0f && _rc_channels.channels[10] > 0.0f)
+	 if (_rc_channels.channels[6] > 0.0f && _rc_channels.channels[7] > 0.0f)
 	 {
 		_motor_kill.kill_switch = true;
 	 }
@@ -357,7 +357,7 @@ MotorController::run_controller(float dt)
 				 // Do a rpm sensor timeout failsafe. Only if in flight mode
 				 if (_switch_state == 2)
 				 {
-					 if (_rc_channels.channels[8] > 0.0f && _rc_channels.channels[9] > 0.0f)
+					 if (_rc_channels.channels[6] > 0.0f && _rc_channels.channels[7] > 0.0f)
 					 {
 						 _idle_offset = 0.0f;
 						 _motor_throttle.throttle = 0.0f;
@@ -373,14 +373,14 @@ MotorController::run_controller(float dt)
 		 // Now if we are bypassed
 		 else if (_params.motor_control_bypass == 1)
 		 {
-			 if (_rc_channels.channels[9] > 0.0f && _rc_channels.channels[10] > 0.0f)
+			 if (_rc_channels.channels[6] > 0.0f && _rc_channels.channels[7] > 0.0f)
 			 {
 				 _idle_offset = 0.0f;
 				 _motor_throttle.throttle = 0.0f;
 			 }
 			 else
 			 {
-				_motor_throttle.throttle = _rc_channels.channels[8]/2.0f + 0.5f + _idle_offset;
+				_motor_throttle.throttle = _rc_channels.channels[5]/2.0f + 0.5f + _idle_offset;
 			 }
 		 }
 
