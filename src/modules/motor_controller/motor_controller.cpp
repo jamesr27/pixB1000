@@ -357,7 +357,7 @@ MotorController::run_controller(float dt)
 				 // Do a rpm sensor timeout failsafe. Only if in flight mode
 				 if (_switch_state == 2)
 				 {
-					 if (_rc_channels.channels[8] > 0.0f && _rc_channels.channels[9] > 0.0f)
+					 if (_rc_channels.channels[9] > 0.0f && _rc_channels.channels[10] > 0.0f)
 					 {
 						 _idle_offset = 0.0f;
 						 _motor_throttle.throttle = 0.0f;
