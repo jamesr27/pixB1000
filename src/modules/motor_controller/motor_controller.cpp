@@ -406,7 +406,7 @@ MotorController::run_controller(float dt)
 	 // We're going to put a fail safe in here to avoid erroneous rpm readings.
 	 // We got the odd 100000 come through, and the controller blips the throttle down to compensate.
 	 _current_rpm = _rotor_rpm.rpm;
-	 if (_current_rpm > 1500.0f)
+	 if (_current_rpm > 2200.0f)
 	 {
 		 _current_rpm = _previous_rpm;
 	 }
